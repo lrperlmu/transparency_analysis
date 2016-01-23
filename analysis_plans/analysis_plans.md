@@ -21,7 +21,7 @@ They are, however, constrained by the study's design. The document is broken int
 
 ###Implementation
 
-One easy way to implement the analyses described below is to use the `R` computing language and the package `lmer` and `lmerTest`. This combination of software allows models to be specified concisely in *formula syntax*. There is a whole separate document (in progress) laying out the implementation.
+One easy way to implement the analyses described below is to use the `R` computing language and the package `lme4` and `lmerTest`. This combination of software allows models to be specified concisely in *formula syntax*. There is a whole separate document (in progress) laying out the implementation.
 
 ###Data setup
 
@@ -49,9 +49,9 @@ For each individual, let $X_{ij}$ be:
 
 A few binary responses were also recorded:
 
-- whether pointing helped in that batch (5 or 10 binary outcomes)
-- whether language helped in that batch (5 or 10 binary outcomes)
-- whether the tasks were successful in that (5 or 10 binary outcomes)
+- whether pointing helped for each command in that phase (5 or 10 binary outcomes)
+- whether language helped for each command in that phase (5 or 10 binary outcomes)
+- whether each command was successful in that phase (5 or 10 binary outcomes)
 
 Each analysis is presented first for continuous data. A section at the end discusses modifications for binary data.
 
