@@ -31,7 +31,7 @@ print(ids_monitor_first)
 print(ids_oculus_first)
 ```
 
-####Response variables and covariates
+####Assembling responses and covariates
 
 #####Terminology
 To clarify terminology, "response" refers to a variable measured in the experiment. "Covariates" are anything we use to explain variation in the response: participant id, variables representing the learning effect, and "condition." By "condition", I mean one of these six combinations:
@@ -55,7 +55,7 @@ For the code to work properly, the files in `data/response` should contain data 
 - `attempt_times.csv`
 - `number_of_attempts.csv`.
 
-In each file, there should be one row per participant, and the first column should be the participant's id. After that, there should be one column for each condition. The first column header should be `ids` and the following six headers should match the bulleted list above.
+In each file, there should be one row per participant, and the first column should be the participant's id. After that, there should be one column for each condition. The first column header should be `ids` and the following six headers should match the bulleted list above. Comments should be prefaced with `#`.
 
 #####Output
 As for the output, there will be one column for the measurements, one for the learning-effect indicators, one for the participant ($i$ in `analysis_plans.md`, `ids` in this code) and one for the condition ($j$ in `analysis_plans.md` and `condition` in this code). The indicator variable $X_{ij}$ from `analysis_plans.md` appears in the code as `learning_23`. The variable `learning_123` in this code is meant to equal $X_{ij} + X_{ij}'$ from `analysis_plans.md`.

@@ -90,8 +90,8 @@ print(ids_monitor_first)</code></pre>
 <pre class="r"><code>print(ids_oculus_first)</code></pre>
 <pre><code>##  [1]  5  8 12 14 16 18 20 22 24 26</code></pre>
 </div>
-<div id="response-variables-and-covariates" class="section level4">
-<h4>Response variables and covariates</h4>
+<div id="assembling-responses-and-covariates" class="section level4">
+<h4>Assembling responses and covariates</h4>
 <div id="terminology" class="section level5">
 <h5>Terminology</h5>
 <p>To clarify terminology, “response” refers to a variable measured in the experiment. “Covariates” are anything we use to explain variation in the response: participant id, variables representing the learning effect, and “condition.” By “condition”, I mean one of these six combinations:</p>
@@ -116,7 +116,7 @@ print(ids_monitor_first)</code></pre>
 <li><code>attempt_times.csv</code></li>
 <li><code>number_of_attempts.csv</code>.</li>
 </ul>
-<p>In each file, there should be one row per participant, and the first column should be the participant’s id. After that, there should be one column for each condition. The first column header should be <code>ids</code> and the following six headers should match the bulleted list above.</p>
+<p>In each file, there should be one row per participant, and the first column should be the participant’s id. After that, there should be one column for each condition. The first column header should be <code>ids</code> and the following six headers should match the bulleted list above. Comments should be prefaced with <code>#</code>.</p>
 </div>
 <div id="output" class="section level5">
 <h5>Output</h5>
