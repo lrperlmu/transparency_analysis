@@ -29,7 +29,9 @@ These data were gathered on 20 subjects. For each subject, some continuous respo
 
 - number of attempts averaged over a set of tasks
 - number of words for each attempt averaged over a set of tasks
-- average time taken for each attempt **OR total time? Asked Leah via email.**
+- average time taken for each attempt 
+- average time taken for each task 
+
 
 For count data or time-to-event data, ANOVA-style linear models generally are more reliable when data are log-transformed. These measurements are all strictly greater than zero, so taking logs is no problem. This also provides a nice interpretation of (functions of the) parameters as percent changes. So, in the descriptions of the analyses, $Y_i$ will denote the log of the task metric. To describe the individual, $i$ will range from 1 to 20. To complicate things slightly, each task metric was measured for baseline, monitor, and headset, and for phase 1 (P1, visualization present) and phase 2 (P2, aftereffects). This will be described as $Y_{ij}$, so that:
 
