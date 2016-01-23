@@ -2,10 +2,6 @@ Eric Kernfeld and Paul Sampson
 
 UW Statistical Consulting program, January 2016
 
-#To do:
-
-- write about diagnostics briefly
-
 ##Analysis Plans for Transparency Data 
 
 This document describes statistical approaches for analyzing results of a human-robot interaction study. This is a technical memo, not a full record; it is intended to be used by those familiar with the project. For more information on the project, contact Leah Perlmutter. If you are a stat/biostat members with access, see the consulting program's winter 2015 records. 
@@ -148,14 +144,14 @@ To go through the Analysis 1 model in detail:
 
 - $\exp(\mu_j)$ is the baseline odds of success under conditions given by $j$, which includes the effect of transparency and initial learning.
 - $\exp(z_i)$ is the odds ratio associated with subject $i$.
-- $\exp(\beta_{learn}X_{ij})$ is the odds ratio attributable to learning between rounds 2 and 3.
+- $\exp(\beta_{learn})$ is the odds ratio attributable to learning between rounds 2 and 3. No effect coincides to $\beta_{learn} = 0$ and $\exp(\beta_{learn}) = 1$.
 
 Another, equally valid interpretation:
 
 - $\exp(z_i)$ is the baseline odds of success associated with subject $i$.
 - $\exp(\mu_j)$ is the odds ratio attributable to transparency conditions $j$ and initial learning.
 
-#####Analysis I
+#####Analysis 2
 
 Analysis 2 can be reworked in a similar way: if we assume
 
@@ -168,5 +164,10 @@ then we might say
 - $\exp(\beta_{learn})$ is the odds ratio attributable to learning between rounds 2 and 3 or between rounds 1 and 2. The analysis assumes those two odds ratios are equal.
 
 
+###Diagnostics
 
+It is necessary to check some of the modeling assumptions. In particular:
 
+- the level of variability should be constant, not depending on the main effects we want to model. This can be checked by plotting residuals versus fitted values. For binary data, a type of residuals (deviance residuals) can be obtained, despite the model not containing $\epsilon_{ij}$.
+- To check that the testing procedures will be reliable, residual distributions and (estimated) random-effect distributions should be symmetric and unimodal.
+- Checking that measurements from different people are independent is impossible, but we can at least plot estimates of $z_i$ ordered by $i$ (does this coincide with the order in which they were measured?) to look for serial correlation.
