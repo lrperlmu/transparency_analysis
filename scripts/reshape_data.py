@@ -6,10 +6,8 @@ def header_string(condition, part):
     return '{}_{}'.format(condition, part)
 
 def read_into_grid(fp):
-    cells = [line.split(',') for line in fp.readlines()]
-
-    # The input files have trailing commas. Strip the last cell.
-    return cells[:-1]
+    rows = [line.split(',') for line in fp.readlines()]
+    return rows
 
 def write_grid_to_csv(data, fp):
     # Uses comma as separator. Assumes no escaping is needed in the data to write.
@@ -23,10 +21,10 @@ def reshape_csv(input_fp, output_fp, aggregate_fcn, data_start_row=2, num_data_r
     # Assumption: 15 columns for each robot, monitor, and oculus
 
     input_grid = read_into_grid(input_fp)
-    #print 'input_grid', input_grid
+    print 'input_grid', input_grid
 
-    data_rows = range(data_start_row, num_data_rows + 1)
-    #print 'data_rows', data_rows
+    data_rows = range(data_start_row, data_start_row + num_data_rows)
+    print 'data_rows', data_rows
 
     conditions = ['baseline', 'monitor', 'oculus']
     parts = ['P1', 'P2']
