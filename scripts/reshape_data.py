@@ -93,15 +93,20 @@ if __name__ == '__main__':
     output_data_dir = 'data/reshaped'
 
     # accuracy is already in the right form
-    input_filenames = ['attempt_times.csv', 'completion_times.csv', 'language.csv',
-                       'number_of_attempts.csv', 'number_of_words.csv', 'pointing.csv']
-    aggregation_functions = [mean, mean, sum, mean, mean, sum]
+    input_filenames = ['attempt_times', 'completion_times', 'language',
+                       'number_of_attempts', 'number_of_words', 'pointing']
+    aggregation_functions = [[mean], [mean], [sum, len], [mean], [mean], [sum, len]]
 
-    for filename, aggregation_fcn in zip(input_filenames, aggregation_functions):
-        input_filename = repo_dir + '/' + input_data_dir + '/' + filename
-        output_filename = repo_dir + '/' + output_data_dir + '/' + filename
-        print 'opening', input_filename
+    for filename, aggregation_fcns in zip(input_filenames, aggregation_functions):
+        for fcn in aggregation_fcns:
 
-        with open(input_filename, 'r') as input_fp, open(output_filename, 'w') as output_fp:
-            reshape_csv(input_fp, output_fp, aggregation_fcn)
-            print 'output file:', output_filename
+            suffix = ''
+            if fcn == len:
+                suffix = '_totals'
+            input_filename = repo_dir + '/' + input_data_dir + '/' + filename + '.csv'
+            output_filename = repo_dir + '/' + output_data_dir + '/' + filename + suffix + '.csv'
+            print 'opening', input_filename
+
+            with open(input_filename, 'r') as input_fp, open(output_filename, 'w') as output_fp:
+                reshape_csv(input_fp, output_fp, fcn)
+                print 'output file:', output_filename
