@@ -66,7 +66,7 @@ img {
 </div>
 
 
-<p>This document carries out the analysis and diagnostics outlined elsewhere in the repo (please read <code>analysis_plans.md</code> first). For more information, contact Eric Kernfeld, <code>ekernf01 (obvious symbol) uw (department of transportation) edu</code>.</p>
+<p>This document defines functions to carry out the analysis and diagnostics outlined elsewhere in the repo. It is intended to be called via <code>transparency_analysis_script</code>. For more information, contact Eric Kernfeld, <code>ekernf01 (obvious symbol) uw (department of transportation) edu</code>.</p>
 <div id="setting-up-enviroment" class="section level3">
 <h3>Setting up enviroment</h3>
 <pre class="r"><code>rm(list = ls()) #clear namespace
@@ -74,8 +74,10 @@ img {
 PATH_TO_THIS_FILE = &quot;~/Desktop/winter_2016/consulting/Leah Perlmutter (cs)/transparency_analysis/analysis_code/&quot;
 setwd(PATH_TO_THIS_FILE)
 require(lme4)
-require(lmerTest)
-require(assertthat)</code></pre>
+require(car)
+require(assertthat)
+require(xtable)
+require(ggplot2)</code></pre>
 </div>
 <div id="data-reshaping" class="section level3">
 <h3>Data reshaping</h3>
@@ -107,13 +109,14 @@ print(ids_monitor_first)</code></pre>
 </div>
 <div id="input" class="section level5">
 <h5>Input</h5>
-<p>For the code to work properly, the files in <code>data/response</code> should contain data for one response variable each. The files should be entitled:</p>
+<p>For the code to work properly, the files in <code>data/reshaped</code> should contain data for one response variable each. The files should be entitled:</p>
 <ul>
 <li><code>language.csv</code></li>
 <li><code>pointing.csv</code></li>
 <li><code>accuracy.csv</code></li>
 <li><code>number_of_words.csv</code></li>
 <li><code>attempt_times.csv</code></li>
+<li><code>completion_times.csv</code></li>
 <li><code>number_of_attempts.csv</code>.</li>
 </ul>
 <p>In each file, there should be one row per participant, and the first column should be the participant’s id. After that, there should be one column for each condition. The first column header should be <code>ids</code> and the following six headers should match the bulleted list above. Comments should be prefaced with <code>#</code>.</p>
@@ -125,6 +128,7 @@ print(ids_monitor_first)</code></pre>
 task_metrics = c(binary_metrics, 
                  &quot;number_of_words&quot;, 
                  &quot;attempt_times&quot;, 
+                 &quot;completion_times&quot;, 
                  &quot;number_of_attempts&quot;)
 condition_names = c(&quot;baseline_P1&quot;, &quot;baseline_P2&quot;, 
                      &quot;monitor_P1&quot;,  &quot;monitor_P2&quot;, 
@@ -132,19 +136,32 @@ condition_names = c(&quot;baseline_P1&quot;, &quot;baseline_P2&quot;,
 
 get_long_format_data = function(task_metric){
   #load, reshape, and give meaningful names
-  wide_data = read.csv(file = paste0(&quot;../data/response/&quot;, task_metric, &quot;.csv&quot;), comment.char = &quot;#&quot;)
-  assertthat::assert_that(all( names(wide_data) == c(&quot;ids&quot;, condition_names) ))
-  long_data = reshape2::melt(wide_data, id.vars = &quot;ids&quot;) 
-  long_data_nice = data.frame(numeric(120))
+  fname = paste0(&quot;../data/reshaped/&quot;, task_metric, &quot;.csv&quot;)
+  
+  wide_data = read.csv(file = fname, comment.char = &quot;#&quot;)
+  assertthat::assert_that(all( names(wide_data) == c(&quot;participant_id&quot;, condition_names) ))
+  long_data = reshape2::melt(wide_data, id.vars = &quot;participant_id&quot;) 
+  long_data_nice = data.frame(task_metric = numeric(120))
   long_data_nice$task_metric = long_data$value
   long_data_nice$condition = long_data$variable
+  long_data_nice$ids = long_data$participant_id
   
-  #get total trials for binary and log responses for non-binary
-  if(task_metric %in% binary_metrics ){
-    long_data_nice$num_actions = 
+  #get total trials for accuracy data: 10 for P1, 5 for P2
+  if(task_metric == &quot;accuracy&quot;){
+    long_data_nice$num_commands = 
       5 *(long_data_nice$condition %in% c(&quot;baseline_P2&quot;, &quot;monitor_P2&quot;, &quot;oculus_P2&quot;)) +
       10*(long_data_nice$condition %in% c(&quot;baseline_P1&quot;, &quot;monitor_P1&quot;, &quot;oculus_P1&quot;))
-  } else {
+  } 
+  
+  #get total trials for pointing and language data
+  if(task_metric %in% c(&quot;pointing&quot;, &quot;language&quot;)){
+    wide_totals = read.csv(file = paste0(&quot;../data/reshaped/&quot;, task_metric, &quot;_totals.csv&quot;), comment.char = &quot;#&quot;)
+    long_totals = reshape2::melt(wide_totals, id.vars = &quot;participant_id&quot;) 
+    long_data_nice$num_commands = long_totals$value
+  } 
+  
+  #get logs for non-binary data
+  if (!task_metric %in% binary_metrics){
     long_data_nice$log_task_metric = log(long_data_nice$task_metric)
   } 
 
@@ -166,43 +183,134 @@ get_long_format_data = function(task_metric){
 </div>
 </div>
 </div>
-<div id="analysis-code" class="section level3">
-<h3>Analysis code</h3>
+<div id="analysis-and-diagnostic-function-definitions" class="section level3">
+<h3>Analysis and diagnostic function definitions</h3>
 <p>This function performs calculations for either of the analyses (specify just an integer, 1 or 2) on any task metric (specify a string matching one of the filenames from above, but without the <code>.csv</code>.) For example, to perform Analysis 1 on the attempt times, use the command</p>
-<pre><code>fitted_model = fit_and_test(task_metric = &quot;attempt_times&quot;, which_analysis = 1)</code></pre>
-<p>.</p>
-<pre class="r"><code>fit_and_test = function(task_metric, which_analysis){
-  
-  # We model the log task metric for non-binary data and 
-  # the &quot;successes&quot; versus &quot;failures&quot; for binary data
-  if(task_metric %in% binary_metrics){
-    response_formula = ~ cbind(task_metric, num_actions - task_metric)
-  } else{
-    response_formula = ~ log_task_metric
-  }
-  
-  # specify form of model, varying learning effect based on which analysis we're doing
+<pre><code>fitted_model = print_short_results(task_metric = &quot;attempt_times&quot;, which_analysis = 1)</code></pre>
+<p>. This prints some test results as a side effect, and it returns a fitted model object.</p>
+<pre class="r"><code>fit_reg = function(task_metric, which_analysis){
+
+  # specify form of model, varying learning effect based on which analysis 
+  # we're doing and response based on binary versus continuous
   assertthat::assert_that(which_analysis %in% 1:2)
   if(which_analysis==1){
-    my_formula = response_formula ~ (1|ids) + condition + learning_23
+    if(task_metric %in% binary_metrics){
+      my_formula = cbind(task_metric, num_commands - task_metric) ~ (1|ids) + 0 + condition + learning_23
+    } else {
+      my_formula =log_task_metric ~ (1|ids) + 0 + condition + learning_23
+    }
   } 
   if(which_analysis==2){
-    my_formula = response_formula ~ (1|ids) + condition + learning_123
+    if(task_metric %in% binary_metrics){
+      my_formula = cbind(task_metric, num_commands - task_metric) ~ (1|ids) + 0 + condition + learning_123
+    } else {
+      my_formula = log_task_metric ~ (1|ids) + 0 + condition + learning_123
+    }
   }   
   
   long_data = get_long_format_data(task_metric)
   
-  # call either linear regression (non-binary) or quasi-binomial regression (binary)
+  # call either linear regression (non-binary) or binomial regression (binary)
   if(task_metric %in% binary_metrics){
     fitted_mod = lme4::glmer(data = long_data, formula = my_formula, 
-                            family = quasibinomial())
+                            family = binomial())
   } else{
     fitted_mod = lme4::lmer (data = long_data, formula = my_formula)
   }
   
-  print(&quot;Model summary with p-values:&quot;)
-  lmerTest::summary(fitted_mod)
   return(fitted_mod)
+}</code></pre>
+<p>This function creates diagnostic plots:</p>
+<ul>
+<li>fitted values versus residual magnitudes to check homoskedasticity</li>
+<li>participants versus residuals to check for serial correlation</li>
+<li>residual histograms and random-effect estimates to check for skew</li>
+</ul>
+<pre class="r"><code>make_diagnostic_plots = function(task_metric, which_analysis){
+  fitted_model = fit_reg(task_metric, which_analysis)
+  long_data = fitted_model@frame
+  long_data$res = resid(fitted_model)
+  long_data$fitted_vals = fitted(fitted_model)
+  p1 = ggplot(long_data) + 
+    geom_point(aes(y = res, x = fitted_vals)) +
+    ggtitle(&quot;Rsdl ~ fit values&quot;)
+  p2 = ggplot(long_data) + 
+    geom_boxplot(aes(y = res, x = ids, group = ids)) +
+    ggtitle(&quot;Rsdl ~ participant&quot;)
+  p3 = ggplot(long_data, aes(x = res)) + 
+    geom_density() + 
+    ggtitle(&quot;Rsdl&quot;)
+  print(p1); print(p2); print(p3)
+  cat(&quot;  \n&quot;)
+}</code></pre>
+<p>This function extracts p-values from the fitted model object generated above.</p>
+<pre class="r"><code>get_pvals = function(task_metric, which_analysis, verbose = FALSE){
+
+  fitted_model = fit_reg(task_metric, which_analysis)
+  diffs_H1 = car::linearHypothesis(fitted_model, hypothesis.matrix = c(2, 0, -1,  0, -1,  0, 0)) #H1: main effects
+  diffs_H2 = car::linearHypothesis(fitted_model, hypothesis.matrix = c(0, 2,  0, -1,  0, -1, 0)) #H2: aftereffects
+  diffs_H3 = car::linearHypothesis(fitted_model, hypothesis.matrix = c(0, 0,  1,  0, -1,  0, 0)) #H3: oculus vs monitor
+  diffs_H3_after = car::linearHypothesis(fitted_model, hypothesis.matrix = c(0, 0,  0,  1,  0, -1, 0)) #H3: oculus vs monitor aftereffects
+  
+  if(verbose){
+    print(&quot;======================================&quot;)
+    print(paste0(&quot;Running analysis &quot;, which_analysis, &quot; with task metric &quot;,  task_metric))
+    print(&quot;======================================&quot;)
+    print(&quot;Model term corresponding to difference between oculus and monitor has p-value&quot;)
+    print(diffs_H3$`Pr(&gt;Chisq)`[2])
+    print(&quot;Model term corresponding to difference between oculus and monitor aftereffects has p-value&quot;)
+    print(diffs_H3_after$`Pr(&gt;Chisq)`[2])
+    if(which_analysis==2){
+      print(&quot;Model term corresponding to transparency effects has p-value&quot;)
+      print(diffs_H1$`Pr(&gt;Chisq)`[2])
+      print(&quot;Model term corresponding to transparency aftereffects has p-value&quot;)
+      print(diffs_H2$`Pr(&gt;Chisq)`[2])
+    }
+  }
+  return( list(which_analysis = which_analysis, 
+               fitted_model = fitted_model, 
+               pH1 = diffs_H1$`Pr(&gt;Chisq)`[2],
+               pH2 = diffs_H2$`Pr(&gt;Chisq)`[2],
+               pH3 = diffs_H3$`Pr(&gt;Chisq)`[2],
+               pH3a = diffs_H3_after$`Pr(&gt;Chisq)`[2]) )
+}</code></pre>
+<p>This function loops through all the hypotheses and analyses, printing Markdown text and HTML tables as a side-effect.</p>
+<pre class="r"><code>print_tables_A1A2 = function(){
+  make_diagnostic_plots
+  for(i in 1:2){
+    cat(paste0(&quot;###Analysis &quot;, i)[1])
+    test_results = as.list(seq_along(task_metrics))
+    my_table = data.frame(task_metric = task_metrics,
+                          H3a_pval = seq_along(task_metrics),
+                          H3_pval = seq_along(task_metrics),
+                          H2_pval = seq_along(task_metrics),
+                          H1_pval = seq_along(task_metrics) )
+    
+    for(j in seq_along(task_metrics)){
+      test_results[[j]] = get_pvals(task_metrics[j], which_analysis = i)
+      my_table$H3a_pval[j] = test_results[[j]]$pH3a
+      my_table$H3_pval[j] = test_results[[j]]$pH3
+      my_table$H2_pval[j] = test_results[[j]]$pH2
+      my_table$H1_pval[j] = test_results[[j]]$pH1
+    }
+    if(i==1){
+      my_table$H2_pval = NULL
+      my_table$H1_pval = NULL
+    }
+    print(xtable::xtable(my_table), type = &quot;html&quot;)
+  }
+}</code></pre>
+<p>This function loops through all the models, printing diagnostic plots and Markdown text.</p>
+<pre class="r"><code>print_diagnostics = function(){
+  for(i in 1:2){
+    cat(&quot;  \n  \n&quot;)
+    cat(&quot;####Analysis 1&quot;)
+    for(task_metric in task_metrics){
+      cat(&quot;  \n  \n&quot;)
+      cat(&quot;#####Task metric&quot;, task_metric, &quot;  \n&quot;)
+      make_diagnostic_plots(task_metric, i)
+    }
+  }
 }</code></pre>
 </div>
 

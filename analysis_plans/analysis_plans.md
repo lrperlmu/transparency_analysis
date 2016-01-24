@@ -21,7 +21,7 @@ They are, however, constrained by the study's design. The document is broken int
 
 ###Implementation
 
-One easy way to implement the analyses described below is to use the `R` computing language and the package `lme4` and `lmerTest`. This combination of software allows models to be specified concisely in *formula syntax*. There is a whole separate document (in progress) laying out the implementation.
+One easy way to implement the analyses described below is to use the `R` computing language and the packages `lme4` and `car`. This combination of software allows models to be specified concisely in *formula syntax*. There is a whole separate document (in progress) laying out the implementation.
 
 ###Data setup
 

@@ -1,0 +1,49 @@
+---
+title: "Transparency Analysis"
+author: "Eric Kernfeld"
+output: html_document
+---
+
+This document carries out the analysis and diagnostics outlined elsewhere in the repo. For more information, check the README and then contact Eric Kernfeld, `ekernf01 (obvious symbol) uw (department of transportation) edu`.
+
+###Loading functions
+
+This chunk loads the analysis functions. It overwrites `transparency_analysis_functions.R` in the process, and it puts a small amount of miscellaneous non-function objects into your namespace. Sorry.
+
+```{r, results = "hide", message = "FALSE"}
+#This needs to be changed depending on where you have your clone of the repository.
+PATH_TO_THIS_FILE = "~/Desktop/winter_2016/consulting/Leah Perlmutter (cs)/transparency_analysis/analysis_code/"
+warning(paste("The path", PATH_TO_THIS_FILE, "should point to transparency_analysis_functions.Rmd and transparency_analysis_script.Rmd."))
+setwd(PATH_TO_THIS_FILE)
+require(knitr)
+knitr::purl("transparency_analysis_functions.Rmd")
+source("transparency_analysis_functions.R")
+```
+
+###Analysis function calls
+
+The following tables provide approximate p-values under the Analysis 1 and Analysis 2 assumptions. As far as intepretation:
+
+- The p-value labeled `H3a` tests a term in the model that captures the average difference between oculus and monitor during P2 ('a' for 'aftereffects').
+- The p-value labeled `H3` tests a term in the model that captures the average difference between oculus and monitor during P1.
+- The p-value labeled `H2` tests a term in the model that captures the average difference between oculus/monitor and baseline during P2 (also aftereffects). This column should not appear for analysis 1, as the test requires assumptions that analysis 1 refuses to make.
+- The p-value labeled `H1` tests a term in the model that captures the average difference between oculus/monitor and baseline during P1. This column should not appear for analysis 1, as the test requires assumptions that analysis 1 refuses to make.
+
+Based on the diagnostics below, I would not trust the p-values describing the binary data in either analysis (need to talk to Paul first). In both analyses, the rest seem fine.
+
+For Analysis 1, all the hypothesis tests pertain to choice of oculus versus monitor. There is only one significant p-value ($p \approx 0.02$) out of eight hypothesis tests, meaning the evidence that the choice of oculus versus monitor matters is weak to nonexistent. The significant value appeared in the `attempt_times` measurements for P1.
+
+For Analysis 2, half the hypothesis tests pertain to choice of oculus versus monitor, and the other half address oculus/monitor versus baseline. There were two significant p-values out of 16 hypothesis tests. One is the same as in Analysis 1. The other describes the average effect of transparency devices compared to baseline on the task metric `number_of_words` ($r \approx 0.04$). This means the evidence that the novel transparency methods are affecting task metrics is very weak. 
+
+
+```{r, results="asis"}
+print_tables_A1A2()
+```
+
+###Diagnostic function calls
+
+This call generates a bunch of plots that will help diagnose problems.
+
+```{r, results="asis", fig.width=2.5, fig.height = 2, message=FALSE}
+print_diagnostics()
+```
