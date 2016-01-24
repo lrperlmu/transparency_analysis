@@ -6,8 +6,10 @@ def header_string(condition, part):
     return '{}_{}'.format(condition, part)
 
 def read_into_grid(fp):
-    # Assumes a trailing comma and no blank data cells
-    return [line.rstrip(',\n').split(',') for line in fp.readlines()]
+    cells = [line.split(',') for line in fp.readlines()]
+
+    # The input files have trailing commas. Strip the last cell.
+    return cells[:-1]
 
 def write_grid_to_csv(data, fp):
     # Uses comma as separator. Assumes no escaping is needed in the data to write.
@@ -24,7 +26,7 @@ def reshape_csv(input_fp, output_fp, aggregate_fcn, data_start_row=2, num_data_r
     #print 'input_grid', input_grid
 
     data_rows = range(data_start_row, num_data_rows + 1)
-    print 'data_rows', data_rows
+    #print 'data_rows', data_rows
 
     conditions = ['baseline', 'monitor', 'oculus']
     parts = ['P1', 'P2']
@@ -34,7 +36,7 @@ def reshape_csv(input_fp, output_fp, aggregate_fcn, data_start_row=2, num_data_r
         for condition in conditions
         for part in parts
     ]
-    print 'headers', headers
+    #print 'headers', headers
 
     condition_start_cols = {'baseline': 1, 'monitor': 16, 'oculus': 31}
     part_cols = {'P1': range(0, 10), 'P2': range(10, 15)}
@@ -58,15 +60,25 @@ def reshape_csv(input_fp, output_fp, aggregate_fcn, data_start_row=2, num_data_r
                 cols = [start + offset for offset in part_cols[curr_part]]
                 # print 'cols', cols
 
-                # grab the data and aggregate it
+                # grab the data
                 curr_part_data = [
-                    float(row[col])
-                    for col in cols
+                    row[col_idx]
+                    for col_idx in cols
                 ]
-                print 'data', curr_part_data
-                aggregate_value = aggregate_fcn(curr_part_data)
-                print 'aggregate', aggregate_value
+                #print 'data', curr_part_data
+
+                # remove empties
+                non_empty_data = [
+                    float(item)
+                    for item in curr_part_data
+                    if len(item.strip()) > 0
+                ]
+
+                # aggregate it
+                aggregate_value = aggregate_fcn(non_empty_data)
+                #print 'aggregate', aggregate_value
                 output_row.append(aggregate_value)
+
         output_grid.append(output_row)
 
     write_grid_to_csv(output_grid, output_fp)
@@ -82,8 +94,10 @@ if __name__ == '__main__':
     input_data_dir = 'data/original'
     output_data_dir = 'data/reshaped'
 
-    input_filenames = ['attempt_times.csv']
-    aggregation_functions = [mean]
+    # accuracy is already in the right form
+    input_filenames = ['attempt_times.csv', 'completion_times.csv', 'language.csv',
+                       'number_of_attempts.csv', 'number_of_words.csv', 'pointing.csv']
+    aggregation_functions = [mean, mean, sum, mean, mean, sum]
 
     for filename, aggregation_fcn in zip(input_filenames, aggregation_functions):
         input_filename = repo_dir + '/' + input_data_dir + '/' + filename
