@@ -1,19 +1,14 @@
 ---
-title: "Transparency Analysis Code"
+title: "Transparency Analysis Code Base"
 author: "Eric Kernfeld"
 output: html_document
 ---
 
-This document defines functions to carry out the analysis and diagnostics outlined elsewhere in the repo. It is intended to be called via `transparency_analysis_script`. For more information, check out the README and then contact Eric Kernfeld, `ekernf01 (obvious symbol) uw (department of transportation) edu`.
+This document defines functions to carry out the analysis and diagnostics outlined elsewhere in the repo. It is intended to be called via `transparency_analysis_script`, which sets the working directory correctly. For more information, check out the README and then contact Eric Kernfeld, `ekernf01 (obvious symbol) uw (department of transportation) edu`.
 
 ###Setting up enviroment
 
-```{r, results='hide', message=FALSE}
-rm(list = ls()) #clear namespace
-#This needs to be changed depending on where you have your clone of the repository.
-PATH_TO_THIS_FILE = "~/Desktop/winter_2016/consulting/Leah Perlmutter (cs)/transparency_analysis/analysis_code/"
-warning(paste("The path", PATH_TO_THIS_FILE, "should point to transparency_analysis_functions.Rmd and transparency_analysis_script.Rmd."))
-setwd(PATH_TO_THIS_FILE)
+```{r, results='hide', message = FALSE, warning = FALSE}
 require(lme4)
 require(car)
 require(assertthat)

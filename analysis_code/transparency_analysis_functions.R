@@ -1,9 +1,4 @@
-## ---- results='hide', message=FALSE--------------------------------------
-rm(list = ls()) #clear namespace
-#This needs to be changed depending on where you have your clone of the repository.
-PATH_TO_THIS_FILE = "~/Desktop/winter_2016/consulting/Leah Perlmutter (cs)/transparency_analysis/analysis_code/"
-warning(paste("The path", PATH_TO_THIS_FILE, "should point to transparency_analysis_functions.Rmd and transparency_analysis_script.Rmd."))
-setwd(PATH_TO_THIS_FILE)
+## ---- results='hide', message = FALSE, warning = FALSE-------------------
 require(lme4)
 require(car)
 require(assertthat)

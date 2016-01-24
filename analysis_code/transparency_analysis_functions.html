@@ -66,14 +66,10 @@ img {
 </div>
 
 
-<p>This document defines functions to carry out the analysis and diagnostics outlined elsewhere in the repo. It is intended to be called via <code>transparency_analysis_script</code>. For more information, contact Eric Kernfeld, <code>ekernf01 (obvious symbol) uw (department of transportation) edu</code>.</p>
+<p>This document defines functions to carry out the analysis and diagnostics outlined elsewhere in the repo. It is intended to be called via <code>transparency_analysis_script</code>, which sets the working directory correctly. For more information, check out the README and then contact Eric Kernfeld, <code>ekernf01 (obvious symbol) uw (department of transportation) edu</code>.</p>
 <div id="setting-up-enviroment" class="section level3">
 <h3>Setting up enviroment</h3>
-<pre class="r"><code>rm(list = ls()) #clear namespace
-#This needs to be changed depending on where you have your clone of the repository.
-PATH_TO_THIS_FILE = &quot;~/Desktop/winter_2016/consulting/Leah Perlmutter (cs)/transparency_analysis/analysis_code/&quot;
-setwd(PATH_TO_THIS_FILE)
-require(lme4)
+<pre class="r"><code>require(lme4)
 require(car)
 require(assertthat)
 require(xtable)
