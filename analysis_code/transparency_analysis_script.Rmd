@@ -22,22 +22,37 @@ knitr::purl("transparency_analysis_functions.Rmd")
 source("transparency_analysis_functions.R")
 ```
 
-###Analysis function calls
+###Effect Sizes
 
-The following tables provide approximate p-values under the Analysis 1 and Analysis 2 assumptions. Based on the diagnostics below, Paul and the consulting team agree the results are reliable.
+The following tables provides predictions and effect-size estimates under the Analysis 1 and Analysis 2 assumptions. The predictions are given in the original units for quantitative data and as odds for binary data. The effect sizes can be interpreted as the amount that predictions change when conditions change. They are given as *percent change* for quantitative data and as *percent change in odds* for binary data. 
 
-For Analysis 1, all the hypothesis tests pertain to choice of oculus versus monitor. There is only one significant p-value ($p \approx 0.02$) out of eight hypothesis tests, meaning the evidence that the choice of oculus versus monitor matters is weak to nonexistent. The significant value appeared in the `attempt_times` measurements for P1.
+To interpret the tables:
 
-For Analysis 2, half the hypothesis tests pertain to choice of oculus versus monitor, and the other half address oculus/monitor versus baseline. There were two significant p-values out of 16 hypothesis tests. One is the same as in Analysis 1. The other describes the average effect of transparency devices compared to baseline on the task metric `number_of_words` ($r \approx 0.04$). This means the evidence that the novel transparency methods are affecting task metrics is very weak. 
+- A value of 20.69 for Analysis 1 under headings `language, B_P1` means the predicted odds that someone with no monitor or headset will complete a P1 task correctly are about 21:1. 
+- A value of 25.14 for Analysis 1 under headings `completion_times, O_P2` means we predict it will take 25.14 seconds for someone using the oculus to complete a P2 task correctly. 
+- A value of 16.48% for Analysis 1 under headings `pointing, LEARN` means the odds that pointing will be relevant increase modestly due to learning between rounds 2 and 3. 
+- As a sanity check, note that the tables are not quite identical. For example, the entry `number_of_words, B_to_O_P1` is -39.72 under Analysis 1 but only -22.72 under Analysis 2. These are our predictions for the percentage effect of the oculus (compared to baseline). So, when we account for the learning effect by assuming the same amount of learning happens each round, the effect of the oculus is cut about in half.
+- Bizarrely, the prediction is that learning decreases (by a full 50%!) the odds that language will help the robot's inference.
 
+```{r, results="asis"}
+get_effect_sizes()
+```
+
+###Hypothesis Testing 
+
+The next set of tables provide approximate p-values under the Analysis 1 and Analysis 2 assumptions. 
+
+For Analysis 1, all the hypothesis tests pertain to choice of oculus versus monitor (H3). There are two significant p-values, for pointing and accuracy. So, we have evidence that the choice of oculus versus monitor matters for those task metrics. The estimated effects suggest that the oculus increases the odds that pointing will matter (by 120%, a factor of 2.20) but decreases the odds of success by a lot (85%). The p-value for attempt_times is nearly significant, but the percentage changes (9.68% and 5.48%) are unimpressive. 
+
+For Analysis 2, the hypothesis tests address oculus/monitor versus baseline. None of the results were significant for aftereffects, but for during-effects, the transparency devices seemed to affect pointing, accuracy, and number of words. The effects are all beneficial -- higher accuracy, better use of pointing, and fewer words. The effects are also large in magnitude: 25-25% fewer words and very high changes in odds of pointing and accurate task completion.
 
 ```{r, results="asis"}
 print_tests_A1A2()
 ```
 
-###Diagnostic function calls
+###Diagnostics
 
-This call generates a bunch of plots that will help diagnose problems.
+This call generates plots that will help diagnose problems. Based on these diagnostics, Paul and the consulting team agree the results are reliable.
 
 ```{r, results="asis", fig.width=2.5, fig.height = 2, message=FALSE}
 print_diagnostics()

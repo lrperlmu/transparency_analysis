@@ -13,22 +13,29 @@ print(ids_monitor_first)
 print(ids_oculus_first)
 
 ## ------------------------------------------------------------------------
-binary_metrics = c("language", "pointing", "accuracy")
-task_metrics = c(binary_metrics, 
-                 "number_of_words", 
-                 "attempt_times", 
-                 "completion_times", 
-                 "number_of_attempts")
-condition_names = c("baseline_P1", "baseline_P2", 
+BINARY_METRICS = c("language", "pointing", "accuracy")
+QUANTITATIVE_METRICS = c("number_of_words", 
+                         "attempt_times", 
+                         "completion_times", 
+                         "number_of_attempts")
+TASK_METRICS = c(BINARY_METRICS, QUANTITATIVE_METRICS)
+TM_WITH_UNITS = c(paste0(BINARY_METRICS, " (Odds)"),
+                  paste0(QUANTITATIVE_METRICS, c("", " (sec)", " (sec)", "")))
+TM_WITH_EFFECT_UNITS = c(paste0(BINARY_METRICS, " (% change in odds)"),
+                         paste0(QUANTITATIVE_METRICS, " (% change)"))
+CONDITION_NAMES = c("baseline_P1", "baseline_P2", 
                      "monitor_P1",  "monitor_P2", 
                       "oculus_P1",   "oculus_P2")
+CONDITION_NAMES_SHORT = c("B_P1", "B_P2", 
+                          "M_P1", "M_P2", 
+                          "O_P1", "O_P2")
 
 get_long_format_data = function(task_metric){
   #load, reshape, and give meaningful names
   fname = paste0("../data/reshaped/", task_metric, ".csv")
   
   wide_data = read.csv(file = fname, comment.char = "#")
-  assertthat::assert_that(all( names(wide_data) == c("participant_id", condition_names) ))
+  assertthat::assert_that(all( names(wide_data) == c("participant_id", CONDITION_NAMES) ))
   long_data = reshape2::melt(wide_data, id.vars = "participant_id") 
   long_data_nice = data.frame(task_metric = numeric(120))
   long_data_nice$task_metric = long_data$value
@@ -50,7 +57,7 @@ get_long_format_data = function(task_metric){
   } 
   
   #get logs for non-binary data
-  if (!task_metric %in% binary_metrics){
+  if (!task_metric %in% BINARY_METRICS){
     long_data_nice$log_task_metric = log(long_data_nice$task_metric)
   } 
 
@@ -77,14 +84,14 @@ fit_reg = function(task_metric, which_analysis){
   # we're doing and response based on binary versus continuous
   assertthat::assert_that(which_analysis %in% 1:2)
   if(which_analysis==1){
-    if(task_metric %in% binary_metrics){
+    if(task_metric %in% BINARY_METRICS){
       my_formula = cbind(task_metric, num_commands - task_metric) ~ (1|ids) + 0 + condition + learning_23
     } else {
       my_formula =log_task_metric ~ (1|ids) + 0 + condition + learning_23
     }
   } 
   if(which_analysis==2){
-    if(task_metric %in% binary_metrics){
+    if(task_metric %in% BINARY_METRICS){
       my_formula = cbind(task_metric, num_commands - task_metric) ~ (1|ids) + 0 + condition + learning_123
     } else {
       my_formula = log_task_metric ~ (1|ids) + 0 + condition + learning_123
@@ -94,7 +101,7 @@ fit_reg = function(task_metric, which_analysis){
   long_data = get_long_format_data(task_metric)
   
   # call either linear regression (non-binary) or binomial regression (binary)
-  if(task_metric %in% binary_metrics){
+  if(task_metric %in% BINARY_METRICS){
     fitted_mod = lme4::glmer(data = long_data, formula = my_formula, 
                             family = binomial())
   } else{
@@ -165,16 +172,16 @@ get_pvals = function(task_metric, which_analysis){
 print_tests_A1A2 = function(){
   #Both analyses
   for(i in 1:2){
-    cat(paste0("###Analysis ", i)[1])
+    cat(paste0("####Analysis ", i)[1])
     
-    my_table = data.frame(matrix(NA, nrow = length(task_metrics), 
+    my_table = data.frame(matrix(NA, nrow = length(TASK_METRICS), 
                                  ncol = length(HYPOTHESIS_NAMES)))
     names(my_table) = HYPOTHESIS_NAMES
-    row.names(my_table) = task_metrics
+    row.names(my_table) = TASK_METRICS
 
     #all task metrics
-    for(j in seq_along(task_metrics)){
-      test_results_temp = get_pvals(task_metrics[j], which_analysis = i)
+    for(j in seq_along(TASK_METRICS)){
+      test_results_temp = get_pvals(TASK_METRICS[j], which_analysis = i)
       for(test_name in names(test_results_temp)){
         my_table[j,test_name] = test_results_temp[[test_name]]$pval
       }
@@ -188,11 +195,59 @@ print_diagnostics = function(){
   for(i in 1:2){
     cat("  \n  \n")
     cat(paste("####Analysis", i))
-    for(task_metric in task_metrics){
+    for(task_metric in TASK_METRICS){
       cat("  \n  \n")
       cat("#####Task metric", task_metric, "  \n")
       make_diagnostic_plots(task_metric, i)
     }
+  }
+}
+
+## ------------------------------------------------------------------------
+get_effect_sizes = function(){
+  for(i in 1:2){
+    cat(paste0("####Analysis ", i)[1])
+    main_colnames = paste0(CONDITION_NAMES_SHORT)
+    effect_colnames = c("LEARN", 
+                        "B_to_M_P1",
+                        "B_to_O_P1",
+                        "M_to_O_P1", 
+                        "B_to_M_P2",
+                        "B_to_O_P2",
+                        "M_to_O_P2")
+    
+    main_table = matrix(NA,      
+                        nrow = length(       TM_WITH_UNITS), ncol = length(main_colnames),
+                        dimnames = list(qm = TM_WITH_UNITS,           cn = main_colnames)) 
+    effect_table = matrix(NA,    
+                          nrow = length(       TM_WITH_EFFECT_UNITS), ncol = length(effect_colnames),
+                          dimnames = list(qm = TM_WITH_EFFECT_UNITS,           cn = effect_colnames)) 
+    
+    map_to_pct = function(x) (100 * (exp(x) - 1))
+    quant_proc = function(x) map_to_pct(x)
+    bin_proc = function(x) map_to_pct(x)
+
+    for(j in seq_along(TASK_METRICS)){
+      task_j = TASK_METRICS[j]
+      fitted_model = fit_reg(task_j, which_analysis = i)
+      #Coeffs but not in log space: odds or original units
+      main_table[j, ] = exp(fitted_model@beta[1:6])
+
+      #Differences as percents
+      temp = c(fitted_model@beta[7],
+               fitted_model@beta[3] - fitted_model@beta[1],
+               fitted_model@beta[5] - fitted_model@beta[1],
+               fitted_model@beta[5] - fitted_model@beta[3],
+               fitted_model@beta[4] - fitted_model@beta[2],
+               fitted_model@beta[6] - fitted_model@beta[2],
+               fitted_model@beta[6] - fitted_model@beta[4])
+      if(task_j %in% QUANTITATIVE_METRICS){effect_table[j, ] = quant_proc(temp)}
+      if(task_j %in% BINARY_METRICS)      {effect_table[j, ] = bin_proc(temp)}
+    }
+    cat(paste0("  \n#####Predictions by condition  \n"))
+    print(xtable::xtable(main_table), type = "html")
+    cat(paste0("  \n#####Predicted effects from changing between conditions \n"))
+    print(xtable::xtable(effect_table), type = "html")
   }
 }
 
