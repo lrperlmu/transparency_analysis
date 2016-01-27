@@ -190,64 +190,65 @@ make_diagnostic_plots = function(task_metric, which_analysis){
 This function extracts p-values from the fitted model object generated above.
 
 ```{r}
-get_pvals = function(task_metric, which_analysis, verbose = FALSE){
+HYPOTHESIS_NAMES = c("H1_transp_effects", 
+                     "H2_transp_after_effects", 
+                     "H3_headset_v_monitor")
+get_pvals = function(task_metric, which_analysis){
 
   fitted_model = fit_reg(task_metric, which_analysis)
   
   #Set up name/contrast corresponding to each test
-  hypothesis_names = c("H1_transp_effects", 
-                       "H2_transp_after_effects", 
-                       "H3_headset_v_monitor", 
-                       "H3_hvm_after_effects")
-  the_tests = as.list(1:4); names(the_tests) = hypothesis_names
-  the_tests[[1]] = list(contrast_vector = 0.5*c(2, 0, -1,  0, -1,  0, 0))
-  the_tests[[2]] = list(contrast_vector = 0.5*c(0, 2,  0, -1,  0, -1, 0))
-  the_tests[[3]] = list(contrast_vector = c(0, 0,  1,  0, -1,  0, 0))
-  the_tests[[4]] = list(contrast_vector = c(0, 0,  0,  1,  0, -1, 0))
-  
+
+  the_tests = as.list(1:3); names(the_tests) = HYPOTHESIS_NAMES
+  #mu1 == mu3 == mu5
+  the_tests[[1]] = list(contrast_vector = rbind(c(1, 0, -1,  0,  0,  0, 0),
+                                                c(1, 0,  0,  0, -1,  0, 0)))
+  #mu2 == mu4 == mu6
+  the_tests[[2]] = list(contrast_vector = rbind(c(0, 1,  0, -1,  0,  0, 0),
+                                                c(0, 1,  0,  0,  0, -1, 0)))
+  #mu4 == mu6 AND mu3 == mu5
+  the_tests[[3]] = list(contrast_vector = rbind(c(0, 0,  1,  0, -1,  0, 0),
+                                                c(0, 0,  0,  1,  0, -1, 0)))
+
   #Exclude some tests
-  if(which_analysis == 1){ tests_to_do = 3:4 }
-  if(which_analysis == 2){ tests_to_do = 1:4 }
-  the_tests = the_tests[[tests_to_do]]
+  if(which_analysis == 1){ tests_to_do = 3 }
+  if(which_analysis == 2){ tests_to_do = 1:2 }
+  the_tests = the_tests[tests_to_do]
   
   for(test_ind in seq_along(the_tests)){
     contrast_temp = the_tests[[test_ind]]$contrast_vector
     test_results = car::linearHypothesis(fitted_model, hypothesis.matrix = contrast_temp)
     pval_temp = test_results$`Pr(>Chisq)`[2]
     the_tests[[test_ind]]$pval = pval_temp
-    es_temp = sum(contrast_temp * fitted_model@beta)
-    the_tests[[test_ind]]$effect_size = es_temp
-    the_tests[[test_ind]]$effect_size_se = abs( es_temp / qnorm(pval_temp/2))
+    #es_temp = sum(contrast_temp * fitted_model@beta)
+    #the_tests[[test_ind]]$effect_size = es_temp
+    #the_tests[[test_ind]]$effect_size_se = abs( es_temp / qnorm(pval_temp/2))
   }
-  return( list(which_analysis = which_analysis, 
-               fitted_model = fitted_model, 
-               test_results = the_tests) )
+  return(the_tests)
 }
 ```
 
-This function loops through all the hypotheses and analyses, printing Markdown text and HTML tables as a side-effect.
+This function loops through all the task metrics, hypotheses, and analyses, printing Markdown text and pvalue tables (in HTML) as a side-effect.
+
 ```{r}
-print_tables_A1A2 = function(){
-  make_diagnostic_plots
+print_tests_A1A2 = function(){
+  #Both analyses
   for(i in 1:2){
     cat(paste0("###Analysis ", i)[1])
-    test_results = as.list(seq_along(task_metrics))
+    
+    my_table = data.frame(matrix(NA, nrow = length(task_metrics), 
+                                 ncol = length(HYPOTHESIS_NAMES)))
+    names(my_table) = HYPOTHESIS_NAMES
+    row.names(my_table) = task_metrics
+
+    #all task metrics
     for(j in seq_along(task_metrics)){
-      test_results[[j]] = get_pvals(task_metrics[j], which_analysis = i)$test_results
-      if(j==1){    
-        my_table = data.frame(Test = names(test_results[[j]]), 
-                              Pvalue = NA,
-                              Effect_est = NA,
-                              Stderr = NA)
-        }
-      for(test in my_table$Test){
-        my_table$Pvalue[j] = test_results[[j]]$pval
-        my_table$Effect_est[j] = test_results[[j]]$effect_size
-        my_table$Stderr[j] = test_results[[j]]$effect_size_se
+      test_results_temp = get_pvals(task_metrics[j], which_analysis = i)
+      for(test_name in names(test_results_temp)){
+        my_table[j,test_name] = test_results_temp[[test_name]]$pval
       }
     }
-
-    print(xtable::xtable(my_table), type = "html")
+    print(xtable::xtable(my_table, digits = 4), type = "html")
   }
 }
 ```
@@ -257,7 +258,7 @@ This function loops through all the models, printing diagnostic plots and Markdo
 print_diagnostics = function(){
   for(i in 1:2){
     cat("  \n  \n")
-    cat(paste0("####Analysis", i))
+    cat(paste("####Analysis", i))
     for(task_metric in task_metrics){
       cat("  \n  \n")
       cat("#####Task metric", task_metric, "  \n")

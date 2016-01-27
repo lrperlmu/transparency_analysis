@@ -24,14 +24,7 @@ source("transparency_analysis_functions.R")
 
 ###Analysis function calls
 
-The following tables provide approximate p-values under the Analysis 1 and Analysis 2 assumptions. As far as intepretation:
-
-- The p-value labeled `H3a` tests a term in the model that captures the average difference between oculus and monitor during P2 ('a' for 'aftereffects').
-- The p-value labeled `H3` tests a term in the model that captures the average difference between oculus and monitor during P1.
-- The p-value labeled `H2` tests a term in the model that captures the average difference between oculus/monitor and baseline during P2 (also aftereffects). This column should not appear for analysis 1, as the test requires assumptions that analysis 1 refuses to make.
-- The p-value labeled `H1` tests a term in the model that captures the average difference between oculus/monitor and baseline during P1. This column should not appear for analysis 1, as the test requires assumptions that analysis 1 refuses to make.
-
-Based on the diagnostics below, I would not trust the p-values describing the binary data in either analysis (need to talk to Paul first). In both analyses, the rest seem fine.
+The following tables provide approximate p-values under the Analysis 1 and Analysis 2 assumptions. Based on the diagnostics below, Paul and the consulting team agree the results are reliable.
 
 For Analysis 1, all the hypothesis tests pertain to choice of oculus versus monitor. There is only one significant p-value ($p \approx 0.02$) out of eight hypothesis tests, meaning the evidence that the choice of oculus versus monitor matters is weak to nonexistent. The significant value appeared in the `attempt_times` measurements for P1.
 
@@ -39,7 +32,7 @@ For Analysis 2, half the hypothesis tests pertain to choice of oculus versus mon
 
 
 ```{r, results="asis"}
-print_tables_A1A2()
+print_tests_A1A2()
 ```
 
 ###Diagnostic function calls
