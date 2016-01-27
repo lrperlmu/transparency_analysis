@@ -10,14 +10,19 @@ This document describes statistical approaches for analyzing results of a human-
 
 These analysis plans aim to test three hypotheses:
 
-- H1: Adding visualization-based transparency after using only natural transparency will improve task metrics. 
-- H2: By improving the user's mental model, visualization-based transparency will improve task metrics even after it is removed.
-- H3: The medium in which visualizations are provided (monitor versus headset) will not impact task metrics.
+- H1: Adding visualization-based transparency after using only natural transparency will improve task metrics. (During P1, headset and monitor are better than baseline.)
+- H2: By improving the user's mental model, visualization-based transparency will improve task metrics even after it is removed. (During P2, headset and monitor are better than baseline.)
+- H3: The medium in which visualizations are provided (monitor versus headset) will not impact task metrics. (During P1 and P2, headset and monitor have about the same effect.)
 
-They are, however, constrained by the study's design. The document is broken into two parts:
+Later in the document, I generate precise *statistical hypotheses* corresponding to these scientific hypotheses.
+
+The main obstacle in our analysis: we need to disentangle the effect of transparency and the effect of learning (i.e. learning from experience alone). The document is broken into two parts:
 
 - Analysis 1 uses uncontroversial assumptions, but it can test only H3, not the others.
-- Analysis 2 assumes the effect learning is constant over time on a logarithmic scale. This assumption allows for testing H1 and H2.
+- Analysis 2 assumes the effect of learning is constant over time on a logarithmic scale (or log-odds, for binary data). This assumption allows for testing H1 and H2.
+
+Each analysis is presented first for quantitative data. A section at the end discusses modifications for binary data.
+
 
 ###Implementation
 
@@ -32,8 +37,7 @@ These data were gathered on 20 subjects. For each subject, some continuous respo
 - average time taken for each attempt 
 - average time taken for each task 
 
-
-For count data or time-to-event data, ANOVA-style linear models generally are more reliable when data are log-transformed. These measurements are all strictly greater than zero, so taking logs is no problem. This also provides a nice interpretation of (functions of the) parameters as percent changes. So, in the descriptions of the analyses, $Y_i$ will denote the log of the task metric. To describe the individual, $i$ will range from 1 to 20. To complicate things slightly, each task metric was measured for baseline, monitor, and headset, and for phase 1 (P1, visualization present) and phase 2 (P2, aftereffects). This will be described as $Y_{ij}$, so that:
+For count data or time-to-event data, ANOVA-style linear models are more reliable when data are log-transformed. These measurements are all strictly greater than zero, so taking logs is no problem. This also provides a nice interpretation of (functions of the) parameters as percent changes. So, in the descriptions of the analyses, $Y_i$ will denote the log of the task metric. To describe the individual, $i$ will range from 1 to 20. To complicate things slightly, each task metric was measured for baseline, monitor, and headset, and for phase 1 (P1, visualization present) and phase 2 (P2, aftereffects). This will be described as $Y_{ij}$, so that:
 
 - $Y_{21}$ is the log task metric for person **2**, P1, baseline
 - $Y_{11}$ is the log task metric for person **1**, P1, baseline
@@ -55,7 +59,7 @@ A few binary responses were also recorded:
 - whether language helped for each command in that phase (5 or 10 binary outcomes)
 - whether each command was successful in that phase (5 or 10 binary outcomes)
 
-Each analysis is presented first for continuous data. A section at the end discusses modifications for binary data.
+Each analysis is presented first for quantitative data. A section at the end discusses modifications for binary data.
 
 ###Analysis 1 
 
@@ -67,8 +71,8 @@ $$Y_{ij} = z_i + \mu_j + \beta_{learn}X_{ij} + \epsilon_{ij}.$$
 
 To interpret each component:
 
-- $\epsilon_{ij} \sim N(0, \sigma^2_{phase})$ -- A random "noise" term describing natural stochasticity in a single measurement $Y_{ij}$.
-- $z_i \sim N(0, \sigma^2_{person})$ -- a random effect specific to person $i$, describing their initial aptitude with the robot. 
+- $\epsilon_{ij} \sim N(0, \sigma^2_{phase})$ -- A random "noise" term describing natural variability in a single measurement $Y_{ij}$.
+- $z_i \sim N(0, \sigma^2_{person})$ -- a random effect specific to person $i$, describing how their initial aptitude with the robot differs from the average. 
 - $\beta_{learn}$ -- the average effect of learning that occurs between the first transparency device and the second (rounds 2 and 3; tasks 16 and 31; batches 7 and 13). More info in the section below.
 - $\mu_j$ -- a fixed, unknown parameter describing:
 	- $j = 1$: the average log task metric for P1, baseline
@@ -79,15 +83,21 @@ To interpret each component:
 	- $j = 6$: the average log task metric for P2, headset, *having learned from the 15 baseline tasks*
 
 ####Capabilities and Assumptions
+
+#####Assumptions and limitations
+
 This model assumes measurements from individual people are statistically independent. This assumption is crucial.
 
 The model assumes the effect of learning between rounds 2 and 3 is *multiplicative*: on average, the extra practice alters task metrics by a certain percentage. If people learn so much from the headset that their monitor performance skyrockets, but not the other way around, this assumption would be violated. 
 
-This assumption brings us to tests of H3. It is possible to estimate every parameter in this model, in particular $\mu_j$. The parameters $\mu_j$ cannot separate the transparency's effect from the effect of learning during the 15 baseline tasks; Nevertheless, testing $\mu_3 = \mu_5$ or $\mu_4= \mu_6$ gives a reliable test of H3. This assumes that the effect of learning during the first 15 tasks is equal (on average) between the monitor-first group and the headset-first group. 
+As a side note, $\mu_4$ and $\mu_3$ are not directly comparable, because the measure performance on different items, and they may also differ due to learning. This is true for any pair of $j$ values where one is odd and the other even.
 
-As a side note, $\mu_4$ and $\mu_3$ are not directly comparable, because of the differences in batch size between P1 and P2. This is true for any pair of $j$ values where one is odd and the other even.
+#####Estimating effect sizes
 
-This paragraph describes a test not outlined in H1, H2, or H3, but the parameter $\beta_{learn}$ can be tested. If it is a statistically significant, that means the learning effect is probably not due to chance. Since $\beta_{learn}$ is added to the log task metrics, $e^{\beta_{learn}} = 0.7$ means that learning between rounds 2 and 3 decreases average task metrics by 70%. This can be used to check whether the effect of learning is scientifically meaningful.
+It is possible to estimate every parameter in this model, in particular $\mu_j$. This can help tell us which effects are scientifically meaningful. However, the parameters $\mu_j$ capture some unknown mixture of the transparency's effect and a learning effect. The parameter $\beta_{learn}$ can also be estimated. Since $\beta_{learn}$ is added to the log task metrics, $e^{\beta_{learn}} = 0.7$ means that learning between rounds 2 and 3 decreases predicted task metrics by 30%. This can be used to check whether the effect of learning is scientifically meaningful.
+
+#####Statistical hypothesis testing
+To convert H3 into a statistical hypothesis, we could test the double constraint "$\mu_3 = \mu_5$ *and* $\mu_4 = \mu_6$." We initially ran tests for $\mu_3 = \mu_5$ and $\mu_4 = \mu_6$ separately, but "$\mu_3 = \mu_5$ *and* $\mu_4 = \mu_6$" corresponds more closely to the scientific hypothesis H3, so the code now tests "$\mu_3 = \mu_5$ *and* $\mu_4 = \mu_6$". 
 
 This analysis plan does not address H1 or H2.
 
@@ -114,17 +124,19 @@ This model makes the same assumptions outlined in Analysis 1:
 - It still assumes measurements from individual people are statistically independent. This assumption is crucial.
 - It still assumes the effect of learning between rounds 2 and 3 is *multiplicative*.
 
-One extra assumption is that the effect of learning between rounds 2 and 3 equals the effect of learning between rounds 1 and 2. We described this by saying "learning is additive", but since we are on a log scale, this should be reworded. The model assumes *the percent change in average task metrics due to learning between rounds rounds 2 and 3* equals *the percent change in average task metrics due to learning between rounds rounds 1 and 2*.
+One extra assumption is that the effect of learning between rounds 2 and 3 equals the effect of learning between rounds 1 and 2. Earlier, we described this by saying "learning is linear", but since we are on a log scale, this should be reworded. The model assumes *the percent change in average task metrics due to learning between rounds rounds 2 and 3* equals *the percent change in average task metrics due to learning between rounds rounds 1 and 2*.
 
-Since H3 can be tested without this extra assumption, Analysis 2 does not address H3. For the rest, the test $\nu_3 + \nu_5 = 2\nu_1$ can address H1. The test or $\nu_4 + \nu_6 = 2\nu_2$ can address H2. These tests only assess whether results are due to chance. To assess the scientific importance of the effects, exponentials of differences are useful. For example, $e^{\nu_3 - \nu_1} = 0.7$ means the estimated *effect* of the *monitor* is to reduce task metrics by 30% on average. For another example, $e^{\nu_6 - \nu_2} = 0.7$ means the estimated *aftereffect* of the *headset* is to reduce task metrics by 30% on average.
+Since H3 can be tested without this extra assumption, Analysis 2 does not address H3. For the rest, we intially tested $\nu_3 + \nu_5 = 2\nu_1$ to address H1. We tested $\nu_4 + \nu_6 = 2\nu_2$ to address H2. Another option, which is not mathematically equivalent, is to test $\nu_3 = \nu_5 = \nu_1$ for H1 and $\nu_4 = \nu_6 = \nu_2$ for H2. I prefer the second set of options, since they seem closer to our scientific hypotheses. So, the code now tests $\nu_3 = \nu_5 = \nu_1$ for H1 and $\nu_4 = \nu_6 = \nu_2$ for H2.
+
+These tests only assess whether results are due to chance. To assess the *magnitude* of the effects, exponentials of differences are useful. For example, $e^{\nu_3 - \nu_1} = 0.7$ means the estimated *effect* of the *monitor* (compared to baseline) reduces predicted task metrics by 30%. For another example, $e^{\nu_6 - \nu_2} = 0.7$ means the estimated *aftereffect* of the *headset* is to reduce predicted task metrics by 30%.
 
 ###Analyzing binary outcomes
 
 ####Model form 
 
-For readers familiar with generalized linear models (GLMs), we will analyze the binary data using the same fixed and random effects outlined above, but we embed them into a quasi-binomial GLM with a canonical link function. This technique is closely related to logistic regression.
+This document is primarily intended for Leah's team, but as a brief aside for the consultants, we will analyze the binary data using the same fixed and random effects outlined above. But, we embed them into a quasi-binomial GLM with a canonical link function. 
 
-To provide more detail, we will analyze the binary data by modeling the probability of success for each combination of factors. A simple way to do this is to assume that the success probability maps to the various conditions via a function similar to the linear models in analysis 1. 
+To provide more detail for Leah et al., this technique is closely related to *logistic regression*. We will analyze the binary data by modeling the probability of success for each combination of factors. A simple way to do this is to assume that the success probability maps to the various conditions via a function similar to the linear models in analysis 1. 
 
 $$\log(\frac{p_{ij}}{1 - p_{ij}}) = z_i + \mu_j + \beta_{learn}X_{ij}.$$
 
@@ -136,7 +148,7 @@ We can interpret the results using *log odds* or *log odds ratios*. The odds ass
 
 $$\frac{p_{ij}}{1 - p_{ij}} =  \exp(\mu_j)\exp(z_i)\exp(\beta_{learn}).$$
 
-The effect measured by $\beta_{learn}$ can be described as a log odds ratio because if $$\frac{p'}{1 - p'} =  \exp(\mu_j)\exp(z_i)$$ (success odd, no learning) and $$\frac{p}{1 - p} =  \exp(\mu_j)\exp(z_i)\exp(\beta_{learn})$$ (success odds, learning included), then $$\beta_{learn} = \log(\frac{\frac{p}{1 - p}}{\frac{p'}{1 - p'}}).$$
+The effect measured by $\beta_{learn}$ can be described as a log odds ratio because if the odds of success with no learning are $$q' =  \exp(\mu_j)\exp(z_i)$$ and the odds of success with learning included are $$q =  \exp(\mu_j)\exp(z_i)\exp(\beta_{learn}),$$  then $$\beta_{learn} = \log(\frac{q}{q'}).$$
 
 ####Interpretation Details
 
@@ -170,6 +182,6 @@ then we might say
 
 It is necessary to check some of the modeling assumptions. In particular:
 
-- the level of variability should be constant, not depending on the main effects we want to model. This can be checked by plotting residuals versus fitted values. For binary data, a type of residuals (deviance residuals) can be obtained, despite the model not containing $\epsilon_{ij}$.
-- To check that the testing procedures will be reliable, residual distributions and (estimated) random-effect distributions should be symmetric and unimodal.
+- the level of variability should be constant, not depending on the main effects we want to model. This can be checked by plotting residuals versus fitted values. For binary data, a type of residuals can be obtained.
+- To check that the testing procedures will be reliable, residual distributions for quantitative task metrics should be symmetric and unimodal.
 - Checking that measurements from different people are independent is impossible, but we can at least plot estimates of $z_i$ ordered by $i$ (does this coincide with the order in which they were measured?) to look for serial correlation.

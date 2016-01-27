@@ -127,32 +127,35 @@ make_diagnostic_plots = function(task_metric, which_analysis){
 get_pvals = function(task_metric, which_analysis, verbose = FALSE){
 
   fitted_model = fit_reg(task_metric, which_analysis)
-  diffs_H1 = car::linearHypothesis(fitted_model, hypothesis.matrix = c(2, 0, -1,  0, -1,  0, 0)) #H1: main effects
-  diffs_H2 = car::linearHypothesis(fitted_model, hypothesis.matrix = c(0, 2,  0, -1,  0, -1, 0)) #H2: aftereffects
-  diffs_H3 = car::linearHypothesis(fitted_model, hypothesis.matrix = c(0, 0,  1,  0, -1,  0, 0)) #H3: oculus vs monitor
-  diffs_H3_after = car::linearHypothesis(fitted_model, hypothesis.matrix = c(0, 0,  0,  1,  0, -1, 0)) #H3: oculus vs monitor aftereffects
   
-  if(verbose){
-    print("======================================")
-    print(paste0("Running analysis ", which_analysis, " with task metric ",  task_metric))
-    print("======================================")
-    print("Model term corresponding to difference between oculus and monitor has p-value")
-    print(diffs_H3$`Pr(>Chisq)`[2])
-    print("Model term corresponding to difference between oculus and monitor aftereffects has p-value")
-    print(diffs_H3_after$`Pr(>Chisq)`[2])
-    if(which_analysis==2){
-      print("Model term corresponding to transparency effects has p-value")
-      print(diffs_H1$`Pr(>Chisq)`[2])
-      print("Model term corresponding to transparency aftereffects has p-value")
-      print(diffs_H2$`Pr(>Chisq)`[2])
-    }
+  #Set up name/contrast corresponding to each test
+  hypothesis_names = c("H1_transp_effects", 
+                       "H2_transp_after_effects", 
+                       "H3_headset_v_monitor", 
+                       "H3_hvm_after_effects")
+  the_tests = as.list(1:4); names(the_tests) = hypothesis_names
+  the_tests[[1]] = list(contrast_vector = 0.5*c(2, 0, -1,  0, -1,  0, 0))
+  the_tests[[2]] = list(contrast_vector = 0.5*c(0, 2,  0, -1,  0, -1, 0))
+  the_tests[[3]] = list(contrast_vector = c(0, 0,  1,  0, -1,  0, 0))
+  the_tests[[4]] = list(contrast_vector = c(0, 0,  0,  1,  0, -1, 0))
+  
+  #Exclude some tests
+  if(which_analysis == 1){ tests_to_do = 3:4 }
+  if(which_analysis == 2){ tests_to_do = 1:4 }
+  the_tests = the_tests[[tests_to_do]]
+  
+  for(test_ind in seq_along(the_tests)){
+    contrast_temp = the_tests[[test_ind]]$contrast_vector
+    test_results = car::linearHypothesis(fitted_model, hypothesis.matrix = contrast_temp)
+    pval_temp = test_results$`Pr(>Chisq)`[2]
+    the_tests[[test_ind]]$pval = pval_temp
+    es_temp = sum(contrast_temp * fitted_model@beta)
+    the_tests[[test_ind]]$effect_size = es_temp
+    the_tests[[test_ind]]$effect_size_se = abs( es_temp / qnorm(pval_temp/2))
   }
   return( list(which_analysis = which_analysis, 
                fitted_model = fitted_model, 
-               pH1 = diffs_H1$`Pr(>Chisq)`[2],
-               pH2 = diffs_H2$`Pr(>Chisq)`[2],
-               pH3 = diffs_H3$`Pr(>Chisq)`[2],
-               pH3a = diffs_H3_after$`Pr(>Chisq)`[2]) )
+               test_results = the_tests) )
 }
 
 ## ------------------------------------------------------------------------
@@ -161,23 +164,21 @@ print_tables_A1A2 = function(){
   for(i in 1:2){
     cat(paste0("###Analysis ", i)[1])
     test_results = as.list(seq_along(task_metrics))
-    my_table = data.frame(task_metric = task_metrics,
-                          H3a_pval = seq_along(task_metrics),
-                          H3_pval = seq_along(task_metrics),
-                          H2_pval = seq_along(task_metrics),
-                          H1_pval = seq_along(task_metrics) )
-    
     for(j in seq_along(task_metrics)){
-      test_results[[j]] = get_pvals(task_metrics[j], which_analysis = i)
-      my_table$H3a_pval[j] = test_results[[j]]$pH3a
-      my_table$H3_pval[j] = test_results[[j]]$pH3
-      my_table$H2_pval[j] = test_results[[j]]$pH2
-      my_table$H1_pval[j] = test_results[[j]]$pH1
+      test_results[[j]] = get_pvals(task_metrics[j], which_analysis = i)$test_results
+      if(j==1){    
+        my_table = data.frame(Test = names(test_results[[j]]), 
+                              Pvalue = NA,
+                              Effect_est = NA,
+                              Stderr = NA)
+        }
+      for(test in my_table$Test){
+        my_table$Pvalue[j] = test_results[[j]]$pval
+        my_table$Effect_est[j] = test_results[[j]]$effect_size
+        my_table$Stderr[j] = test_results[[j]]$effect_size_se
+      }
     }
-    if(i==1){
-      my_table$H2_pval = NULL
-      my_table$H1_pval = NULL
-    }
+
     print(xtable::xtable(my_table), type = "html")
   }
 }
@@ -186,7 +187,7 @@ print_tables_A1A2 = function(){
 print_diagnostics = function(){
   for(i in 1:2){
     cat("  \n  \n")
-    cat("####Analysis 1")
+    cat(paste0("####Analysis", i))
     for(task_metric in task_metrics){
       cat("  \n  \n")
       cat("#####Task metric", task_metric, "  \n")
