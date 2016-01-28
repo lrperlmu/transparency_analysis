@@ -133,26 +133,29 @@ make_diagnostic_plots = function(task_metric, which_analysis){
 ## ------------------------------------------------------------------------
 HYPOTHESIS_NAMES = c("H1_transp_effects", 
                      "H2_transp_after_effects", 
-                     "H3_headset_v_monitor")
+                     "H3_headset_v_monitor",
+                     "H3_headset_v_monitor_aftereffect")
 get_pvals = function(task_metric, which_analysis){
 
   fitted_model = fit_reg(task_metric, which_analysis)
   
   #Set up name/contrast corresponding to each test
 
-  the_tests = as.list(1:3); names(the_tests) = HYPOTHESIS_NAMES
+  the_tests = as.list(HYPOTHESIS_NAMES); names(the_tests) = HYPOTHESIS_NAMES
   #mu1 == mu3 == mu5
   the_tests[[1]] = list(contrast_vector = rbind(c(1, 0, -1,  0,  0,  0, 0),
                                                 c(1, 0,  0,  0, -1,  0, 0)))
   #mu2 == mu4 == mu6
   the_tests[[2]] = list(contrast_vector = rbind(c(0, 1,  0, -1,  0,  0, 0),
                                                 c(0, 1,  0,  0,  0, -1, 0)))
-  #mu4 == mu6 AND mu3 == mu5
-  the_tests[[3]] = list(contrast_vector = rbind(c(0, 0,  1,  0, -1,  0, 0),
-                                                c(0, 0,  0,  1,  0, -1, 0)))
+  #mu3 == mu5
+  the_tests[[3]] = list(contrast_vector = rbind(c(0, 0,  1,  0, -1,  0, 0)))
+  
+  #mu4 == mu6
+  the_tests[[4]] = list(contrast_vector = rbind(c(0, 0,  0,  1,  0, -1, 0)))
 
   #Exclude some tests
-  if(which_analysis == 1){ tests_to_do = 3 }
+  if(which_analysis == 1){ tests_to_do = 3:4 }
   if(which_analysis == 2){ tests_to_do = 1:2 }
   the_tests = the_tests[tests_to_do]
   

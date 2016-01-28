@@ -96,7 +96,7 @@ source(&quot;transparency_analysis_functions.R&quot;)</code></pre>
 <div id="predictions-by-condition" class="section level5">
 <h5>Predictions by condition</h5>
 <!-- html table generated in R 3.1.2 by xtable 1.7-4 package -->
-<!-- Wed Jan 27 01:56:57 2016 -->
+<!-- Wed Jan 27 16:52:25 2016 -->
 <table border="1">
 <tr>
 <th>
@@ -286,7 +286,7 @@ number_of_attempts
 <div id="predicted-effects-from-changing-between-conditions" class="section level5">
 <h5>Predicted effects from changing between conditions</h5>
 <!-- html table generated in R 3.1.2 by xtable 1.7-4 package -->
-<!-- Wed Jan 27 01:56:57 2016 -->
+<!-- Wed Jan 27 16:52:25 2016 -->
 <table border="1">
 <tr>
 <th>
@@ -503,7 +503,7 @@ number_of_attempts (% change)
 <div id="predictions-by-condition-1" class="section level5">
 <h5>Predictions by condition</h5>
 <!-- html table generated in R 3.1.2 by xtable 1.7-4 package -->
-<!-- Wed Jan 27 01:56:59 2016 -->
+<!-- Wed Jan 27 16:52:28 2016 -->
 <table border="1">
 <tr>
 <th>
@@ -693,7 +693,7 @@ number_of_attempts
 <div id="predicted-effects-from-changing-between-conditions-1" class="section level5">
 <h5>Predicted effects from changing between conditions</h5>
 <!-- html table generated in R 3.1.2 by xtable 1.7-4 package -->
-<!-- Wed Jan 27 01:57:00 2016 -->
+<!-- Wed Jan 27 16:52:28 2016 -->
 <table border="1">
 <tr>
 <th>
@@ -909,12 +909,12 @@ number_of_attempts (% change)
 <div id="hypothesis-testing" class="section level3">
 <h3>Hypothesis Testing</h3>
 <p>The next set of tables provide approximate p-values under the Analysis 1 and Analysis 2 assumptions.</p>
-<p>For Analysis 1, all the hypothesis tests pertain to choice of oculus versus monitor (H3). There are two significant p-values, for pointing and accuracy. So, we have evidence that the choice of oculus versus monitor matters for those task metrics. The estimated effects suggest that the oculus increases the odds that pointing will matter (by 120%, a factor of 2.20) but decreases the odds of success by a lot (85%). The p-value for attempt_times is nearly significant, but the percentage changes (9.68% and 5.48%) are unimpressive.</p>
+<p>For Analysis 1, all the hypothesis tests pertain to choice of oculus versus monitor (H3). There are two significant p-values, for pointing and accuracy. So, we have some evidence that the choice of oculus versus monitor matters for those task metrics. The estimated effects suggest that the oculus increases the odds that pointing will matter (by 120%, a factor of 2.20) but decreases the odds of success by a lot (85%). Both signifcant p-values pertain to effects observed while the transparency was present, rather than aftereffects. Also noteworthy, though, is the large effect size estimate (60% decrease) for <code>M_to_O_P2</code>. This was not deemed significant, but only because the uncertainty involved was even larger. The p-value for attempt_times is nearly significant, but the percentage changes (9.68% and 5.48%) may not represent a useful degree of improvement (that is a question for an expert in this field).</p>
 <p>For Analysis 2, the hypothesis tests address oculus/monitor versus baseline. None of the results were significant for aftereffects, but for during-effects, the transparency devices seemed to affect pointing, accuracy, and number of words. The effects are all beneficial – higher accuracy, better use of pointing, and fewer words. The effects are also large in magnitude: 25-25% fewer words and very high changes in odds of pointing and accurate task completion.</p>
 <pre class="r"><code>print_tests_A1A2()</code></pre>
 <div id="analysis-1-1" class="section level4">
 <h4>Analysis 1<!-- html table generated in R 3.1.2 by xtable 1.7-4 package --></h4>
-<!-- Wed Jan 27 01:57:02 2016 -->
+<!-- Wed Jan 27 16:52:33 2016 -->
 <table border="1">
 <tr>
 <th>
@@ -928,6 +928,9 @@ H2_transp_after_effects
 <th>
 H3_headset_v_monitor
 </th>
+<th>
+H3_headset_v_monitor_aftereffect
+</th>
 </tr>
 <tr>
 <td align="right">
@@ -938,7 +941,10 @@ language
 <td>
 </td>
 <td align="right">
-0.2214
+0.1179
+</td>
+<td align="right">
+0.7040
 </td>
 </tr>
 <tr>
@@ -950,7 +956,10 @@ pointing
 <td>
 </td>
 <td align="right">
-0.0086
+0.0022
+</td>
+<td align="right">
+0.7983
 </td>
 </tr>
 <tr>
@@ -962,7 +971,10 @@ accuracy
 <td>
 </td>
 <td align="right">
-0.0442
+0.0203
+</td>
+<td align="right">
+0.2805
 </td>
 </tr>
 <tr>
@@ -974,7 +986,10 @@ number_of_words
 <td>
 </td>
 <td align="right">
-0.5309
+0.5578
+</td>
+<td align="right">
+0.2814
 </td>
 </tr>
 <tr>
@@ -986,7 +1001,10 @@ attempt_times
 <td>
 </td>
 <td align="right">
-0.0519
+0.0217
+</td>
+<td align="right">
+0.1848
 </td>
 </tr>
 <tr>
@@ -998,7 +1016,10 @@ completion_times
 <td>
 </td>
 <td align="right">
-0.2647
+0.5758
+</td>
+<td align="right">
+0.1052
 </td>
 </tr>
 <tr>
@@ -1010,14 +1031,17 @@ number_of_attempts
 <td>
 </td>
 <td align="right">
-0.6937
+0.7971
+</td>
+<td align="right">
+0.3933
 </td>
 </tr>
 </table>
 </div>
 <div id="analysis-2-1" class="section level4">
 <h4>Analysis 2<!-- html table generated in R 3.1.2 by xtable 1.7-4 package --></h4>
-<!-- Wed Jan 27 01:57:05 2016 -->
+<!-- Wed Jan 27 16:52:36 2016 -->
 <table border="1">
 <tr>
 <th>
@@ -1031,6 +1055,9 @@ H2_transp_after_effects
 <th>
 H3_headset_v_monitor
 </th>
+<th>
+H3_headset_v_monitor_aftereffect
+</th>
 </tr>
 <tr>
 <td align="right">
@@ -1041,6 +1068,8 @@ language
 </td>
 <td align="right">
 0.9208
+</td>
+<td>
 </td>
 <td>
 </td>
@@ -1057,6 +1086,8 @@ pointing
 </td>
 <td>
 </td>
+<td>
+</td>
 </tr>
 <tr>
 <td align="right">
@@ -1067,6 +1098,8 @@ accuracy
 </td>
 <td align="right">
 0.1879
+</td>
+<td>
 </td>
 <td>
 </td>
@@ -1083,6 +1116,8 @@ number_of_words
 </td>
 <td>
 </td>
+<td>
+</td>
 </tr>
 <tr>
 <td align="right">
@@ -1093,6 +1128,8 @@ attempt_times
 </td>
 <td align="right">
 0.3371
+</td>
+<td>
 </td>
 <td>
 </td>
@@ -1109,6 +1146,8 @@ completion_times
 </td>
 <td>
 </td>
+<td>
+</td>
 </tr>
 <tr>
 <td align="right">
@@ -1119,6 +1158,8 @@ number_of_attempts
 </td>
 <td align="right">
 0.3000
+</td>
+<td>
 </td>
 <td>
 </td>

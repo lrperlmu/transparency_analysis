@@ -97,7 +97,7 @@ As a side note, $\mu_4$ and $\mu_3$ are not directly comparable, because the mea
 It is possible to estimate every parameter in this model, in particular $\mu_j$. This can help tell us which effects are scientifically meaningful. However, the parameters $\mu_j$ capture some unknown mixture of the transparency's effect and a learning effect. The parameter $\beta_{learn}$ can also be estimated. Since $\beta_{learn}$ is added to the log task metrics, $e^{\beta_{learn}} = 0.7$ means that learning between rounds 2 and 3 decreases predicted task metrics by 30%. This can be used to check whether the effect of learning is scientifically meaningful.
 
 #####Statistical hypothesis testing
-To convert H3 into a statistical hypothesis, we could test the double constraint "$\mu_3 = \mu_5$ *and* $\mu_4 = \mu_6$." We initially ran tests for $\mu_3 = \mu_5$ and $\mu_4 = \mu_6$ separately, but "$\mu_3 = \mu_5$ *and* $\mu_4 = \mu_6$" corresponds more closely to the scientific hypothesis H3, so the code now tests "$\mu_3 = \mu_5$ *and* $\mu_4 = \mu_6$". 
+To convert H3 into a statistical hypothesis, we could test the double constraint "$\mu_3 = \mu_5$ *and* $\mu_4 = \mu_6$." Another option is to test each equality separately. We initially ran tests for $\mu_3 = \mu_5$ and $\mu_4 = \mu_6$ separately, and that is what the code now does. 
 
 This analysis plan does not address H1 or H2.
 
