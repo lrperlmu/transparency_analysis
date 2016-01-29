@@ -154,9 +154,20 @@ get_pvals = function(task_metric, which_analysis){
   #mu4 == mu6
   the_tests[[4]] = list(contrast_vector = rbind(c(0, 0,  0,  1,  0, -1, 0)))
 
+  #mu1 == mu3
+  the_tests[[5]] = list(contrast_vector = rbind(c(1, 0,  -1,  0, 0,  0, 0)))
+  #mu1 == mu5
+  the_tests[[6]] = list(contrast_vector = rbind(c(1, 0,  0,  0, -1,  0, 0)))
+  #mu2 == mu4
+  the_tests[[7]] = list(contrast_vector = rbind(c(0, 1,  0,  -1,  0, 0, 0)))
+  #mu2 == mu6
+  the_tests[[8]] = list(contrast_vector = rbind(c(0, 1,  0,  0,  0, -1, 0)))
+
+
   #Exclude some tests
   if(which_analysis == 1){ tests_to_do = 3:4 }
   if(which_analysis == 2){ tests_to_do = 1:2 }
+  if(which_analysis == 3){ tests_to_do = 5:8 }
   the_tests = the_tests[tests_to_do]
   
   for(test_ind in seq_along(the_tests)){
@@ -174,7 +185,7 @@ get_pvals = function(task_metric, which_analysis){
 ## ------------------------------------------------------------------------
 print_tests_A1A2 = function(){
   #Both analyses
-  for(i in 1:2){
+  for(i in 1:3){
     cat(paste0("####Analysis ", i)[1])
     
     my_table = data.frame(matrix(NA, nrow = length(TASK_METRICS), 
