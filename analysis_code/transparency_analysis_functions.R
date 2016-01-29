@@ -207,18 +207,64 @@ print_diagnostics = function(){
 }
 
 ## ------------------------------------------------------------------------
+indicate7 = function(spot){
+  indicator = rep(0, 7)
+  indicator[spot] = 1
+  return(indicator)
+}
+
+put_ses_in_parens = function(dirty_df){
+  dirty_df = round(dirty_df, 1)
+  my_cols = colnames(dirty_df)
+  odds = seq_along(my_cols)[seq_along(my_cols) %% 2 == 1]
+  clean_df = dirty_df[,odds]
+  for(i in 1:(length(my_cols)/2)){
+    clean_df[, i] = paste0(dirty_df[, 2*i - 1], "  (", dirty_df[, 2*i], ")")
+  } 
+  return(clean_df)
+}
+
 get_effect_sizes = function(){
   for(i in 1:2){
     cat(paste0("####Analysis ", i)[1])
-    main_colnames = paste0(CONDITION_NAMES_SHORT)
-    effect_colnames = c("LEARN", 
-                        "B_to_M_P1",
-                        "B_to_O_P1",
-                        "M_to_O_P1", 
-                        "B_to_M_P2",
-                        "B_to_O_P2",
-                        "M_to_O_P2")
     
+    #Set up contrast vectors
+
+    main_contrasts = lapply(FUN = indicate7, X = as.list(1:6))
+    effect_contrasts = list(indicate7(7),
+                            indicate7(3) - indicate7(1),
+                            indicate7(5) - indicate7(1),
+                            indicate7(5) - indicate7(3),
+                            indicate7(4) - indicate7(2),
+                            indicate7(6) - indicate7(2),
+                            indicate7(6) - indicate7(4))
+    
+    #set up constrast names
+    main_ests = paste0(CONDITION_NAMES_SHORT)
+    effect_ests = c("LEARN", 
+                    "B_to_M_P1",
+                    "B_to_O_P1",
+                    "M_to_O_P1", 
+                    "B_to_M_P2",
+                    "B_to_O_P2",
+                    "M_to_O_P2")
+    main_ses = paste0(main_ests, "_se")
+    effect_ses = paste0(effect_ests, "_se")
+
+    #Set up tables
+    append_se = function(col_names){
+      col_names_se = c()
+      for(name in col_names){
+        col_names_se = c(col_names_se, name, paste0(name, "_se"))
+      }
+      return(col_names_se)
+    }
+    main_colnames = append_se(main_ests)
+    effect_colnames = append_se(effect_ests)
+    
+    main_inds = main_colnames %in% main_ests
+    effect_inds = effect_colnames %in% effect_ests
+
     main_table = matrix(NA,      
                         nrow = length(       TM_WITH_UNITS), ncol = length(main_colnames),
                         dimnames = list(qm = TM_WITH_UNITS,           cn = main_colnames)) 
@@ -226,31 +272,44 @@ get_effect_sizes = function(){
                           nrow = length(       TM_WITH_EFFECT_UNITS), ncol = length(effect_colnames),
                           dimnames = list(qm = TM_WITH_EFFECT_UNITS,           cn = effect_colnames)) 
     
+    #Fill tables
+    
     map_to_pct = function(x) (100 * (exp(x) - 1))
-    quant_proc = function(x) map_to_pct(x)
-    bin_proc = function(x) map_to_pct(x)
+    map_to_pct_se = function(listin) (100 * exp(listin$est) * listin$est_se)
 
     for(j in seq_along(TASK_METRICS)){
       task_j = TASK_METRICS[j]
       fitted_model = fit_reg(task_j, which_analysis = i)
-      #Coeffs but not in log space: odds or original units
-      main_table[j, ] = exp(fitted_model@beta[1:6])
+      
+      #Fill in estimates
 
-      #Differences as percents
-      temp = c(fitted_model@beta[7],
-               fitted_model@beta[3] - fitted_model@beta[1],
-               fitted_model@beta[5] - fitted_model@beta[1],
-               fitted_model@beta[5] - fitted_model@beta[3],
-               fitted_model@beta[4] - fitted_model@beta[2],
-               fitted_model@beta[6] - fitted_model@beta[2],
-               fitted_model@beta[6] - fitted_model@beta[4])
-      if(task_j %in% QUANTITATIVE_METRICS){effect_table[j, ] = quant_proc(temp)}
-      if(task_j %in% BINARY_METRICS)      {effect_table[j, ] = bin_proc(temp)}
+      get_contrast_size = function(x) (fitted_model@beta %*% x)
+      get_contrast_se = function(contrast){
+        test_res = car::linearHypothesis(model = fitted_model, hypothesis.matrix = contrast)
+        pval = test_res$`Pr(>Chisq)`[2]
+        #pval = Pr(|z| > | estimate / se |) given z~N(0,1)
+        #pval/2 = Pr(z > | estimate / se |)  by symmetry
+        #quantile(pval/2) = | estimate / se | by defn of quantile
+        #se = | estimate / quantile(pval/2) |
+        se = abs(get_contrast_size(contrast) / qnorm(pval/2)) 
+        return(list(est = get_contrast_size(contrast), est_se = se))
+      } 
+        
+      temp = lapply(X = main_contrasts,     FUN = get_contrast_size)
+      main_table[j, main_inds]     = sapply(FUN = exp, X = temp)
+      temp = lapply(X = effect_contrasts,   FUN = get_contrast_size)
+      effect_table[j, effect_inds] = sapply(FUN = map_to_pct, X = temp)
+
+      temp_se = lapply(X = main_contrasts, FUN = get_contrast_se)
+      main_table[j, !main_inds] = sapply(FUN = map_to_pct_se, X = temp_se)
+      temp_se = lapply(X = effect_contrasts, FUN = get_contrast_se)
+      effect_table[j, !effect_inds] = sapply(FUN = map_to_pct_se, X = temp_se)
+      
     }
     cat(paste0("  \n#####Predictions by condition  \n"))
-    print(xtable::xtable(main_table), type = "html")
+    print(xtable::xtable(put_ses_in_parens(main_table)), type = "html")
     cat(paste0("  \n#####Predicted effects from changing between conditions \n"))
-    print(xtable::xtable(effect_table), type = "html")
+    print(xtable::xtable(put_ses_in_parens(effect_table)), type = "html")
   }
 }
 
