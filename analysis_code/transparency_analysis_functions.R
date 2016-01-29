@@ -82,7 +82,7 @@ fit_reg = function(task_metric, which_analysis){
 
   # specify form of model, varying learning effect based on which analysis 
   # we're doing and response based on binary versus continuous
-  assertthat::assert_that(which_analysis %in% 1:2)
+  assertthat::assert_that(which_analysis %in% 1:3)
   if(which_analysis==1){
     if(task_metric %in% BINARY_METRICS){
       my_formula = cbind(task_metric, num_commands - task_metric) ~ (1|ids) + 0 + condition + learning_23
@@ -90,7 +90,7 @@ fit_reg = function(task_metric, which_analysis){
       my_formula =log_task_metric ~ (1|ids) + 0 + condition + learning_23
     }
   } 
-  if(which_analysis==2){
+  else{
     if(task_metric %in% BINARY_METRICS){
       my_formula = cbind(task_metric, num_commands - task_metric) ~ (1|ids) + 0 + condition + learning_123
     } else {
@@ -134,7 +134,12 @@ make_diagnostic_plots = function(task_metric, which_analysis){
 HYPOTHESIS_NAMES = c("H1_transp_effects", 
                      "H2_transp_after_effects", 
                      "H3_headset_v_monitor",
-                     "H3_headset_v_monitor_aftereffect")
+                     "H3_headset_v_monitor_aftereffect",
+                    "H1_screen_effects",
+                    "H1_vr_effects",
+                    "H2_screen_after_effects",
+                    "H2_vr_after_effects")
+
 get_pvals = function(task_metric, which_analysis){
 
   fitted_model = fit_reg(task_metric, which_analysis)
