@@ -39,13 +39,14 @@ These data were gathered on 20 subjects. For each subject, some continuous respo
 
 For count data or time-to-event data, ANOVA-style linear models are more reliable when data are log-transformed. These measurements are all strictly greater than zero, so taking logs is no problem. This also provides a nice interpretation of (functions of the) parameters as percent changes. So, in the descriptions of the analyses, $Y_i$ will denote the log of the task metric. To describe the individual, $i$ will range from 1 to 20. To complicate things slightly, each task metric was measured for baseline, monitor, and headset, and for phase 1 (P1, visualization present) and phase 2 (P2, aftereffects). This will be described as $Y_{ij}$, so that:
 
-- $Y_{21}$ is the log task metric for person **2**, P1, baseline
+
 - $Y_{11}$ is the log task metric for person **1**, P1, baseline
 - $Y_{12}$ is the log task metric for person 1, P2, baseline
 - $Y_{13}$ is the log task metric for person 1, P1, monitor, *even if the monitor came after the headset for that person*
 - $Y_{14}$ is the log task metric for person 1, P2, monitor 
 - $Y_{15}$ is the log task metric for person 1, P1, headset, *even if the headset came before the monitor for that person*
 - $Y_{16}$ is the log task metric for person 1, P2, headset
+- $Y_{21}$ is the log task metric for person **2**, P1, baseline
 
 For each individual, let $X_{ij}$ be:
 

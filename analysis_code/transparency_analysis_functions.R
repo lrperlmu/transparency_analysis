@@ -19,10 +19,10 @@ QUANTITATIVE_METRICS = c("number_of_words",
                          "completion_times", 
                          "number_of_attempts")
 TASK_METRICS = c(BINARY_METRICS, QUANTITATIVE_METRICS)
-TM_WITH_UNITS = c(paste0(BINARY_METRICS, " (Odds)"),
-                  paste0(QUANTITATIVE_METRICS, c("", " (sec)", " (sec)", "")))
-TM_WITH_EFFECT_UNITS = c(paste0(BINARY_METRICS, " (% change in odds)"),
-                         paste0(QUANTITATIVE_METRICS, " (% change)"))
+TM_WITH_UNITS = c(paste0(BINARY_METRICS),
+                  paste0(QUANTITATIVE_METRICS))
+TM_WITH_EFFECT_UNITS = c(paste0(BINARY_METRICS),
+                         paste0(QUANTITATIVE_METRICS))
 CONDITION_NAMES = c("baseline_P1", "baseline_P2", 
                      "monitor_P1",  "monitor_P2", 
                       "oculus_P1",   "oculus_P2")
@@ -30,7 +30,7 @@ CONDITION_NAMES_SHORT = c("B_P1", "B_P2",
                           "M_P1", "M_P2", 
                           "O_P1", "O_P2")
 
-get_long_format_data = function(task_metric){
+get_long_format_data = function(task_metric, part = "all"){
   #load, reshape, and give meaningful names
   fname = paste0("../data/reshaped/", task_metric, ".csv")
   
@@ -74,11 +74,27 @@ get_long_format_data = function(task_metric){
   X_prime_ij = long_data_nice$condition %in% c("monitor_P1", "monitor_P2", "oculus_P1", "oculus_P2")
   long_data_nice$learning_123 = X_prime_ij + long_data_nice$learning_23
   
+  
+    long_data_nice$p2 = as.numeric(long_data_nice$condition %in% 
+      c("baseline_P2", "monitor_P2", "oculus_P2"))
+    
+    long_data_nice$p2_detailed = long_data_nice$condition
+    long_data_nice$p2_detailed[!long_data_nice$p2] = long_data_nice$condition[1]
+    
+  #Return only p1 or only p2 or all
+  if(part == "p2"){
+    long_data_nice = subset(long_data_nice, p2)
+  } else if(part == "p1"){
+         long_data_nice = subset(long_data_nice, !p2)
+  } else {
+    assertthat::are_equal(part, "all")
+  }
+  
   return(long_data_nice)
 }
 
 ## ------------------------------------------------------------------------
-fit_reg = function(task_metric, which_analysis){
+fit_reg = function(task_metric, which_analysis, part = "all"){
 
   # specify form of model, varying learning effect based on which analysis 
   # we're doing and response based on binary versus continuous
@@ -87,26 +103,29 @@ fit_reg = function(task_metric, which_analysis){
     if(task_metric %in% BINARY_METRICS){
       my_formula = cbind(task_metric, num_commands - task_metric) ~ (1|ids) + 0 + condition + learning_23
     } else {
-      my_formula =log_task_metric ~ (1|ids) + 0 + condition + learning_23
+      my_formula = log_task_metric ~ (1|ids) + (p2 - 1|condition:ids) + 0 + condition + learning_23
     }
   } 
   if(which_analysis==2){
     if(task_metric %in% BINARY_METRICS){
       my_formula = cbind(task_metric, num_commands - task_metric) ~ (1|ids) + 0 + condition + learning_123
     } else {
-      my_formula = log_task_metric ~ (1|ids) + 0 + condition + learning_123
+      my_formula = log_task_metric ~ (1|ids) + (p2 - 1|condition:ids) + 0 + condition + learning_123
     }
   }   
   
-  long_data = get_long_format_data(task_metric)
+  long_data = get_long_format_data(task_metric, part)
   
   # call either linear regression (non-binary) or binomial regression (binary)
   if(task_metric %in% BINARY_METRICS){
     fitted_mod = lme4::glmer(data = long_data, formula = my_formula, 
-                            family = binomial())
+                             family = binomial())
   } else{
-    fitted_mod = lme4::lmer (data = long_data, formula = my_formula)
-  }
+    fitted_mod = lme4::lmer (data = long_data, formula = my_formula,
+                             control=lmerControl(check.nobs.vs.nlev = "ignore",
+                                                 check.nobs.vs.rankZ = "ignore",
+                                                 check.nobs.vs.nRE="ignore"))
+    }
   
   return(fitted_mod)
 }
@@ -177,15 +196,13 @@ get_pvals = function(task_metric, which_analysis){
     test_results = car::linearHypothesis(fitted_model, hypothesis.matrix = contrast_temp)
     pval_temp = test_results$`Pr(>Chisq)`[2]
     the_tests[[test_ind]]$pval = pval_temp
-    #es_temp = sum(contrast_temp * fitted_model@beta)
-    #the_tests[[test_ind]]$effect_size = es_temp
-    #the_tests[[test_ind]]$effect_size_se = abs( es_temp / qnorm(pval_temp/2))
+
   }
   return(the_tests)
 }
 
 ## ------------------------------------------------------------------------
-print_tests_A1A2 = function(){
+print_tests_A1A2 = function(output_format = "html"){
   #Both analyses
   for(i in 1:2){
     cat(paste0("####Analysis ", i)[1])
@@ -202,7 +219,7 @@ print_tests_A1A2 = function(){
         my_table[j,test_name] = test_results_temp[[test_name]]$pval
       }
     }
-    print(xtable::xtable(my_table, digits = 4), type = "html")
+    print(xtable::xtable(t(nice_round_df(my_table))), type = output_format)
   }
 }
 
@@ -226,8 +243,27 @@ indicate7 = function(spot){
   return(indicator)
 }
 
+nice_round = function(x, ndig = 2){
+  if(x == 0 | is.na(x)) {return(x)}
+  s = sign(x)
+  x = abs(x)
+  left_digits <- floor(log10(x))
+  move_dec = 10 ^ (1 + left_digits - ndig)
+  x = move_dec * round(x / move_dec)
+  return(s*x)
+}
+
+nice_round_df = function(df_in){
+  for(i in 1:dim(df_in)[1]){
+    for(j in 1:dim(df_in)[2]){
+      df_in[i, j] = nice_round(df_in[i, j])
+    }    
+  }
+  return(df_in)
+}
+
 put_ses_in_parens = function(dirty_df){
-  dirty_df = round(dirty_df, 1)
+  dirty_df <- nice_round_df(dirty_df)
   my_cols = colnames(dirty_df)
   odds = seq_along(my_cols)[seq_along(my_cols) %% 2 == 1]
   clean_df = dirty_df[,odds]
@@ -237,7 +273,7 @@ put_ses_in_parens = function(dirty_df){
   return(clean_df)
 }
 
-get_effect_sizes = function(){
+get_effect_sizes = function(output_format = "html", coeff_scale = "orig"){
   for(i in 1:2){
     cat(paste0("####Analysis ", i)[1])
     
@@ -287,9 +323,6 @@ get_effect_sizes = function(){
     
     #Fill tables
     
-    map_to_pct = function(x) (100 * (exp(x) - 1))
-    map_to_pct_se = function(listin) (100 * exp(listin$est) * listin$est_se)
-
     for(j in seq_along(TASK_METRICS)){
       task_j = TASK_METRICS[j]
       fitted_model = fit_reg(task_j, which_analysis = i)
@@ -304,25 +337,39 @@ get_effect_sizes = function(){
         #pval/2 = Pr(z > | estimate / se |)  by symmetry
         #quantile(pval/2) = | estimate / se | by defn of quantile
         #se = | estimate / quantile(pval/2) |
-        se = abs(get_contrast_size(contrast) / qnorm(pval/2)) 
+        #se = abs(get_contrast_size(contrast) / qnorm(pval/2)) 
+        contrast_var = (t(contrast) %*% summary(fitted_model)$vcov %*% contrast)[1,1]
+        se = sqrt(contrast_var)
+        if(se==0){
+          warning("standard error calculated as 0.")
+          print(paste("p value from car: ", pval))
+          print(paste("contrast size: ", get_contrast_size(contrast)))
+        }
         return(list(est = get_contrast_size(contrast), est_se = se))
       } 
-        
+      
+      if(coeff_scale == "orig"){
+        map_coeff = function(x) (exp(x))
+        map_se = function(listin) (exp(listin$est) * listin$est_se)
+      } else {
+        map_coeff = function(x){return(x)}
+        map_se = function(listin){return(listin$est_se)}
+      }
       temp = lapply(X = main_contrasts,     FUN = get_contrast_size)
-      main_table[j, main_inds]     = sapply(FUN = exp, X = temp)
+      main_table[j, main_inds]     = sapply(FUN = map_coeff, X = temp)
       temp = lapply(X = effect_contrasts,   FUN = get_contrast_size)
-      effect_table[j, effect_inds] = sapply(FUN = map_to_pct, X = temp)
+      effect_table[j, effect_inds] = sapply(FUN = map_coeff, X = temp)
 
       temp_se = lapply(X = main_contrasts, FUN = get_contrast_se)
-      main_table[j, !main_inds] = sapply(FUN = map_to_pct_se, X = temp_se)
+      main_table[j, !main_inds] = sapply(FUN = map_se, X = temp_se)
       temp_se = lapply(X = effect_contrasts, FUN = get_contrast_se)
-      effect_table[j, !effect_inds] = sapply(FUN = map_to_pct_se, X = temp_se)
+      effect_table[j, !effect_inds] = sapply(FUN = map_se, X = temp_se)
       
     }
     cat(paste0("  \n#####Predictions by condition  \n"))
-    print(xtable::xtable(put_ses_in_parens(main_table)), type = "html")
+    print(xtable::xtable(t(put_ses_in_parens(main_table))), type = output_format)
     cat(paste0("  \n#####Predicted effects from changing between conditions \n"))
-    print(xtable::xtable(put_ses_in_parens(effect_table)), type = "html")
+    print(xtable::xtable(t(put_ses_in_parens(effect_table))), type = output_format)
   }
 }
 

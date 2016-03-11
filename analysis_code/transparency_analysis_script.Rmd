@@ -24,15 +24,14 @@ source("transparency_analysis_functions.R")
 
 ###Effect Sizes
 
-The following tables provides predictions and effect-size estimates under the Analysis 1 and Analysis 2 assumptions. The predictions are given in the original units for quantitative data and as odds for binary data. The effect sizes can be interpreted as the amount that predictions change when conditions change. They are given as *percent change* for quantitative data and as *percent change in odds* for binary data. 
+The following tables provides predictions and effect-size estimates under the Analysis 1 and Analysis 2 assumptions. The predictions are given in the original units for quantitative data and as odds for binary data. The effect sizes can be interpreted as the amount that predictions change when conditions change. They are given as *multiplicative changes* for quantitative data and as *multiplicative changes in odds* or *odds ratios* for binary data. 
 
 To interpret the tables:
 
-- A value of 20.69 for Analysis 1 under headings `language, B_P1` means the predicted odds that someone with no monitor or headset will complete a P1 task correctly are about 21:1. 
-- A value of 25.14 for Analysis 1 under headings `completion_times, O_P2` means we predict it will take 25.14 seconds for someone using the oculus to complete a P2 task correctly. 
-- A value of 16.48% for Analysis 1 under headings `pointing, LEARN` means the odds that pointing will be relevant increase modestly due to learning between rounds 2 and 3. 
-- As a sanity check, note that the tables are not quite identical. For example, the entry `number_of_words, B_to_O_P1` is -39.72 under Analysis 1 but only -22.72 under Analysis 2. These are our predictions for the percentage effect of the oculus (compared to baseline). So, when we account for the learning effect by assuming the same amount of learning happens each round, the effect of the oculus is cut about in half.
-- Bizarrely, the prediction is that learning decreases (by a full 50%!) the odds that language will help the robot's inference.
+- A value of 21 for Analysis 1 under headings `language, B_P1` means the predicted odds that someone with no monitor or headset will complete a P1 task correctly are about 21:1. 
+- A value of 25 for Analysis 1 under headings `completion_times, O_P2` means we predict it will take 25 seconds for someone using the oculus to complete a P2 task correctly. 
+- A value of 1.2 for Analysis 1 under headings `pointing, LEARN` means the odds that pointing will be relevant increase modestly due to learning between rounds 2 and 3. 
+- A value of 0.47 for Analysis 1 under headings `language, LEARN` means the odds that pointing will be relevant decrease by about half due to learning between rounds 2 and 3. Strangely, the prediction is that learning decreases the odds that language will help the robot's inference.
 
 ```{r, results="asis"}
 get_effect_sizes()
@@ -40,11 +39,11 @@ get_effect_sizes()
 
 ###Hypothesis Testing 
 
-The next set of tables provide approximate p-values under the Analysis 1 and Analysis 2 assumptions. 
+The next set of tables provide p-values under the Analysis 1 and Analysis 2 assumptions. Before I discuss them, I will spend a paragraph writing about P-values in general. The defining property of a P-value is that for a test to have less than 5% chance of a false positive, we must suspend our judgment except when P-values fall below 0.05. In our case, we performed 42 tests, so we would expect about two false positives if no genuine effects were present. P-values do not control the probability of false negatives; that ability is limited by the size of the study and the signal-to-noise ratio.
 
-For Analysis 1, all the hypothesis tests pertain to choice of oculus versus monitor (H3). There are two significant p-values, for pointing and accuracy. So, we have some evidence that the choice of oculus versus monitor matters for those task metrics. The estimated effects suggest that the oculus increases the odds that pointing will matter (by 120%, a factor of 2.20) but decreases the odds of success by a lot (85%). Both signifcant p-values pertain to effects observed while the transparency was present, rather than aftereffects. Also noteworthy, though, is the large effect size estimate (60% decrease) for `M_to_O_P2`. This was not deemed significant, but only because the uncertainty involved was even larger. The p-value for attempt_times is nearly significant, but the percentage changes (9.68% and 5.48%) may not represent a useful degree of improvement (that is a question for an expert in this field). 
+For Analysis 1, all the hypothesis tests pertain to choice of oculus versus monitor (H3). There are three significant p-values, for pointing, accuracy, and attempt times. So, we have some evidence that the choice of oculus versus monitor matters for those task metrics. The estimated effects suggest that the oculus increases the odds that pointing will matter (by a factor of 2.2) but decreases the odds of success to 15% of what they were. Both significant p-values pertain to effects observed while the transparency was present, rather than aftereffects. This does not indicate a genuine difference; it is possible that the effect is present in both parts but sometimes not detectable due to noise. Thus, when we write in the manuscript "The benefits of visual transparency did not carry through to the second part of the experimental condition sessions," that is not justified; it should say that "The benefits of visual transparency *may or may not* not carry through to the second part of the experimental condition sessions." The p-value for `attempt_times`, though significant, may not correspond to a useful degree of improvement, as the estimated effect of 1.1 indicates only a 10% change. 
 
-For Analysis 2, the hypothesis tests address oculus/monitor versus baseline. None of the results were significant for aftereffects, but for during-effects, the transparency devices seemed to affect pointing, accuracy, and number of words. The effects are all beneficial -- higher accuracy, better use of pointing, and fewer words. The effects are also large in magnitude: 25-25% fewer words and very high changes in odds of pointing and accurate task completion.
+For Analysis 2, the hypothesis tests address oculus/monitor versus baseline. None of the results were significant for aftereffects, but for part 1 effects, the transparency devices seemed to affect pointing, accuracy, number of words, and attempt times. The effects are mostly beneficial -- higher accuracy, better use of pointing, fewer words and shorter attempt times -- but since the test is for equality of all three estimates, part of the signal is driven by the poor performance of the oculus relative to the monitor. Once (for attempt times) the oculus even falls below the baseline. The effects are also large in magnitude: 25-25% fewer words and very high changes in odds of pointing and accurate task completion.
 
 ```{r, results="asis"}
 print_tests_A1A2()
